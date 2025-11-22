@@ -1,11 +1,22 @@
 import { Router } from "express";
+import { authController } from "../controllers/authController.js";
 
-const authRouter = Router();
+export default function authRouter(prisma) {
+  const authRouter = Router();
 
-authRouter.get("/", (req, res) => res.send("welcome to the auth router"));
+  const { register, login, refresh, logout } = authController(prisma);
 
-authRouter.post("/register", (req, res) => res.send("Register route called"));
+  authRouter.get("/", (req, res) => {
+    res.status(200).json({ message: "Auth route is working" });
+  });
 
-authRouter.post("/login", (req, res) => res.send("Login route called"));
+  authRouter.post("/register", register);
 
-export { authRouter };
+  authRouter.post("/refresh", refresh);
+
+  authRouter.post("/login", login);
+
+  authRouter.post("/logout", logout);
+
+  return authRouter;
+}

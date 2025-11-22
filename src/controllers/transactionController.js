@@ -7,17 +7,22 @@ export function transactionController(prisma) {
     res.send("Hello from transaction controller");
   }
 
-  async function getTransactionById(req, res) {
+  async function getTransactionById(req, res, next) {
     const { transactionId } = req.params;
     const id = parseInt(transactionId);
     const userId = req.user.id;
 
-    const result = await fetchTransactionForId({ id: id, userId: userId });
+    try {
+      const result = await fetchTransactionForId({ id: id, userId: userId });
 
-    if (result.result === "not-found") {
-      res.status(404).json({ error: "Transaction not found or access denied" });
-    } else {
-      res.status(200).json(result.transaction);
+      if (result.result === "not-found") {
+        res.status(404).json({ error: "Transaction not found or access denied" });
+      } else {
+        res.status(200).json(result.transaction);
+      }
+    } catch (error) {
+      res.status(500).send("Oops! Something went wrong on our end. We'll look into it.");
+      next(new Error(error));
     }
   }
 
