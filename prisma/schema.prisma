@@ -13,8 +13,16 @@ model User {
   firstName    String
   lastName     String?
   email        String        @unique
-  password     String
+  account Account?
   transactions Transaction[]
+  refreshToken RefreshToken?
+}
+
+model Account {
+  id Int @id @default(autoincrement())
+  userId Int @unique
+  password String
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Transaction {
@@ -26,4 +34,15 @@ model Transaction {
   dateCreated  DateTime
   dateModified DateTime?
   user         User      @relation(fields: [userId], references: [id])
+}
+
+model RefreshToken {
+  id String @id 
+  userId Int @unique
+  expiresAt DateTime
+  createdAt DateTime
+  revokedAt DateTime
+  ip String?
+  userAgent String?
+  user User  @relation(fields: [userId], references: [id])
 }
