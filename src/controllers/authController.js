@@ -88,6 +88,14 @@ export function authController(prisma) {
         sameSite: "Lax",
       });
 
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.COOKIE_SECURE === "true",
+        path: "auth/logout",
+        maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
+        sameSite: "Lax",
+      });
+
       console.log("Token refresh successful, new tokens set");
       return res.status(result.code).json({ accessToken: token });
       // NOTE - We return our access token in the response body, but the refresh token is set as a cookie
@@ -100,6 +108,14 @@ export function authController(prisma) {
 
   async function logout(req, res, next) {
     console.log("Handling logout request");
+
+    // Q. So on the client side, how do we set the cookie on a logout request?
+    // A. The cookie is automatically sent by the browser with the request to the /auth/refresh endpoint
+    // Q. So if i want it to be set on other endpoints, what do i do?
+    // A. You need to set the cookie on those endpoints as well, using the same parameters (httpOnly, secure, path, etc)
+    // Q. So if i want to logout from all devices, what do i do?
+    // A. You need to implement a separate endpoint that revokes all refresh tokens for the user in the database
+
     const rawRefresh = req.cookies.refreshToken;
     if (!rawRefresh) return res.status(400).json({ message: "No refresh token provided" });
 

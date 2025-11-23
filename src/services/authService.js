@@ -55,11 +55,11 @@ export function authService(prisma) {
       include: { account: true },
     });
 
-    if (!user || !user.account) return { ok: false, status: 401, message: "Authentication failed" };
+    if (!user || !user.account) return { ok: false, code: 401, message: "Authentication failed" };
 
     const passwordMatch = await bcrypt.compare(password, user.account.password);
 
-    if (!passwordMatch) return { ok: false, status: 401, message: "Authentication failed" };
+    if (!passwordMatch) return { ok: false, code: 401, message: "Authentication failed" };
 
     //create and persist tokens
     const { token, refreshToken, refreshId } = IssueTokens(user.id);
@@ -83,7 +83,7 @@ export function authService(prisma) {
       lastName: user.lastName ?? null,
       email: user.email,
     };
-    return { ok: true, status: 200, data: { user: sanitized, token, refreshToken } };
+    return { ok: true, code: 200, data: { user: sanitized, token, refreshToken } };
   }
 
   /**
@@ -92,7 +92,7 @@ export function authService(prisma) {
    * @param {string} params.rawRefresh
    * @returns {Object} result
    * @returns {boolean} result.ok
-   * @returns {number} result.status
+   * @returns {number} result.code
    * @returns {string} [result.message]
    * @returns {Object} [result.data]
    * @returns {string} result.data.token
@@ -115,7 +115,7 @@ export function authService(prisma) {
     if (!tokenRecord || tokenRecord.userId !== sub || tokenRecord.revokedAt) {
       return {
         ok: false,
-        status: 401,
+        code: 401,
         message: "Invalid refresh token",
         internal: "Refresh token not found or revoked",
       };
@@ -125,7 +125,7 @@ export function authService(prisma) {
     if (new Date(tokenRecord.expiresAt).getTime() < Date.now()) {
       return {
         ok: false,
-        status: 401,
+        code: 401,
         message: "Invalid refresh token",
         internal: "Refresh token expired",
       };
@@ -151,7 +151,7 @@ export function authService(prisma) {
       }),
     ]);
 
-    return { ok: true, status: 200, data: { token, refreshToken } };
+    return { ok: true, code: 200, data: { token, refreshToken } };
   }
 
   /**

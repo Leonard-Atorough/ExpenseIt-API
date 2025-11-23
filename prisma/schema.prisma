@@ -41,7 +41,7 @@ model RefreshToken {
   userId Int @unique
   expiresAt DateTime
   createdAt DateTime
-  revokedAt DateTime
+  revokedAt DateTime?
   ip String?
   userAgent String?
   user User  @relation(fields: [userId], references: [id])
