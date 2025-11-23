@@ -1,0 +1,97 @@
+﻿# AI-assisted jobs for this repository
+# Each job is a small, declarative description the AI or an automation runner can use.
+
+jobs:
+  - id: lint_and_fix
+    description: "Run linter and apply automatic fixes, then run formatter"
+    trigger: manual
+    context_paths:
+      - src
+      - package.json
+    steps:
+      - run: npm run lint -- --fix
+      - run: npm run format
+    outputs:
+      - type: text
+        description: "summary of changes and any remaining issues"
+
+  - id: generate_pr_description
+    description: "Generate a PR description using recent commits and diff summary"
+    trigger: manual
+    context_paths:
+      - .
+    inputs:
+      - name: branch
+        required: false
+    steps:
+      - gather: [git_commits, diff_summary]
+      - run_action: actions/generate-pr-description.md
+    outputs:
+      - type: markdown
+        description: "PR description text"
+
+  - id: suggest_refactors
+    description: "Ask AI to propose small refactors for a file or folder"
+    trigger: manual
+    context_paths:
+      - src
+    inputs:
+      - name: path
+        required: true
+    steps:
+      - gather: [files]
+      - prompt: |
+          Review the code in the provided files and suggest a small, low-risk refactor with a code patch.
+    outputs:
+      - type: patch
+        description: "git patch or diff with suggested changes"
+
+  - id: improve_tests
+    description: "Ask AI to suggest improvements to tests in a file or folder"
+    trigger: manual
+    context_paths:
+      - src/tests
+    inputs:
+      - name: path
+        required: true
+    steps:
+      - gather: [files]
+      - prompt: |
+          Review the test code in the provided files and suggest improvements or additional test cases with a code patch.
+    outputs:
+      - type: patch
+        description: "git patch or diff with suggested test improvements"
+
+  - id: convert_to_typescript
+    description: "Convert a JavaScript file to TypeScript"
+    trigger: manual
+    context_paths:
+      - src
+    inputs:
+      - name: path
+        required: true
+    steps:
+      - gather: [files]
+      - prompt: |
+          Convert the provided JavaScript code to TypeScript, adding appropriate type annotations.
+    outputs:
+      - type: patch
+        description: "git patch or diff with TypeScript conversion"
+
+  - id: plan_feature
+    description: "Generate a feature implementation plan from a feature description"
+    trigger: manual
+    context_paths:
+      - src
+    inputs:
+      - name: feature_description
+        required: true
+    steps:
+      - prompt: |
+          Given the following feature description, create a detailed implementation plan outlining the necessary steps, components, and considerations.
+
+          Feature Description:
+          {{feature_description}}
+    outputs:
+      - type: text
+        description: "Implementation plan for the feature"
