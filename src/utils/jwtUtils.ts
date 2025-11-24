@@ -1,3 +1,4 @@
+import type { PublicKeyInput, JsonWebKeyInput } from "crypto";
 import jwt from "jsonwebtoken";
 
 // export function generateJwt(payload, secret, expiresIn) {
@@ -6,8 +7,10 @@ import jwt from "jsonwebtoken";
 //     return token;
 // }
 
-export async function verifyJwt(token, secret) {
-  // Implementation for verifying JWT token using the provided secret
+export async function verifyJwt(
+  token: string,
+  secret: string | Buffer | PublicKeyInput | JsonWebKeyInput
+): Promise<jwt.JwtPayload> {
   const payload = jwt.verify(token, secret);
-  return payload;
+  return payload as jwt.JwtPayload;
 }

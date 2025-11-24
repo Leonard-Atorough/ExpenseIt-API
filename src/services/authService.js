@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
-import { parseExpiryToMs } from "../utils/timeUtils.js";
+import { parseExpiryToMs } from "../utils/timeUtils.ts";
 import "dotenv/config";
 
 export function authService(prisma) {

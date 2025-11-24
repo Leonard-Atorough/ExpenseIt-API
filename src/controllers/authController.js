@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { authService } from "../services/authService.js";
-import { parseExpiryToMs } from "../utils/timeUtils.js";
+import { parseExpiryToMs } from "../utils/timeUtils.ts";
 
 // Robust authentication controller to handle user auth routes
 // including registration, login, token refresh, and logout.

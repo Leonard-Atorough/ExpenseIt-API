@@ -4,8 +4,10 @@
 // If invalid or missing, returns 401 Unauthorized
 // Usage: app.use('/transactions', authenticationMiddleware, transactionRouter)
 
-import { verifyJwt } from "../utils/jwtUtils.js";
-export async function authenticationHandler(req, res, next) {
+import { verifyJwt } from "../utils/jwtUtils.ts";
+import type { Request, Response, NextFunction } from "express";
+
+export async function authenticationHandler(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers["authorization"];
   if (!authHeader || typeof authHeader !== "string") {
     return res.status(401).json({ error: "Unauthorized: Missing Authorization header" });
@@ -20,7 +22,7 @@ export async function authenticationHandler(req, res, next) {
   try {
     const payload = await verifyJwt(token, process.env.JWT_ACCESS_SECRET);
     // Attach all user info from payload to req.user
-    req.user = payload;
+    req.payload = payload as Record<string, any>;
     next();
   } catch (err) {
     return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });

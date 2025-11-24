@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 import authRouter from "./src/routes/authRouter.js";
-import { initDb } from "./src/config/db.js";
+import { initDb } from "./src/config/db.ts";
 import transactionRouter from "./src/routes/transactionRouter.js";
 import errorHandler from "./src/middleware/error.middleware.js";
 
