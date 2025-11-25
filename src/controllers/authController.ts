@@ -1,16 +1,15 @@
 import "dotenv/config";
 import { authService } from "../services/authService.js";
 import { parseExpiryToMs } from "../utils/timeUtils.ts";
+import type { PrismaClient } from "@prisma/client";
 
-// Robust authentication controller to handle user auth routes
-// including registration, login, token refresh, and logout.
 // Missing features: account verification, password reset, multi-factor authentication.
-export function authController(prisma) {
+export function authController(prisma: PrismaClient) {
   const service = authService(prisma);
 
   async function register(req, res, next) {
     console.log("Handling registration request");
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body as RegisterRequest;
 
     if (!firstName || !email || !password)
       return res.status(400).json({ message: "Required fields missing." });
@@ -19,13 +18,14 @@ export function authController(prisma) {
       const result = await service.register({ firstName, lastName, email, password });
 
       if (!result.ok) {
-        return res.status(result.code).json({ message: result.message || "Registration failed" });
+        return res
+          .status(result.code)
+          .json({ message: "message" in result ? result.message : "Registration failed" });
       }
 
       console.log("Registration successful for user:", result.data.email);
 
       // A future enhancement could be to send a verification email here to confirm the user's email address.
-      // We can then have another endpoint to handle email verification.
       return res.status(result.code).json({ user: result.data });
     } catch (err) {
       console.error("Failed to register account", err);
@@ -36,7 +36,7 @@ export function authController(prisma) {
   async function login(req, res, next) {
     console.log("Handling login request");
     try {
-      const { email, password } = req.body;
+      const { email, password } = req.body as LoginRequest;
       if (!email || !password) return res.status(400).json({ message: "Required fields missing" });
 
       const ip = req.ip;
@@ -44,7 +44,10 @@ export function authController(prisma) {
 
       const result = await service.login({ email, password, ip, userAgent });
 
-      if (!result.ok) return res.status(result.code).json({ message: result.message });
+      if (!result.ok)
+        return res
+          .status(result.code)
+          .json({ message: "message" in result ? result.message : "Login failed" });
 
       const { accessToken, refreshToken, user } = result.data;
 
@@ -58,7 +61,6 @@ export function authController(prisma) {
       });
 
       console.log("Login successful, tokens set");
-      //finally, send access token alongside user (user has been lceaned in the service, password not exposed)
       // In the future we can consider adding roles/permissions to the user object here
       // and we can also consider sending an 2FA email if we implement multi-factor authentication (research needed)
       return res.status(result.code).json({ accessToken, user });
@@ -70,13 +72,16 @@ export function authController(prisma) {
 
   async function refresh(req, res, next) {
     console.log("Handling token refresh request");
-    const rawRefresh = req.cookies.refreshToken;
+    const rawRefresh = req.cookies.refreshToken as string;
     if (!rawRefresh) return res.status(401).json({ message: "No refresh token provided" });
 
     try {
       const result = await service.refresh({ rawRefresh });
 
-      if (!result.ok) return res.status(result.code).json({ message: result.message });
+      if (!result.ok)
+        return res
+          .status(result.code)
+          .json({ message: "message" in result ? result.message : "Refresh failed" });
       // TODO - Log the refresh event. Question is where to log it. Maybe a new collection/table for auth events?
       const { token, refreshToken } = result.data;
 
@@ -98,8 +103,6 @@ export function authController(prisma) {
 
       console.log("Token refresh successful, new tokens set");
       return res.status(result.code).json({ accessToken: token });
-      // NOTE - We return our access token in the response body, but the refresh token is set as a cookie
-      // This is to prevent XSS attacks from stealing the refresh token
     } catch (err) {
       console.error("Failed refresh", err);
       next(err instanceof Error ? err : new Error(String(err)));
@@ -109,19 +112,15 @@ export function authController(prisma) {
   async function logout(req, res, next) {
     console.log("Handling logout request");
 
-    // Q. So on the client side, how do we set the cookie on a logout request?
-    // A. The cookie is automatically sent by the browser with the request to the /auth/refresh endpoint
-    // Q. So if i want it to be set on other endpoints, what do i do?
-    // A. You need to set the cookie on those endpoints as well, using the same parameters (httpOnly, secure, path, etc)
-    // Q. So if i want to logout from all devices, what do i do?
-    // A. You need to implement a separate endpoint that revokes all refresh tokens for the user in the database
-
     const rawRefresh = req.cookies.refreshToken;
     if (!rawRefresh) return res.status(400).json({ message: "No refresh token provided" });
 
     try {
       const result = await service.logout({ rawRefresh });
-      if (!result.ok) return res.status(result.code).json({ message: result.message });
+      if (!result.ok)
+        return res
+          .status(result.code)
+          .json({ message: "message" in result ? result.message : "Logout failed" });
 
       res.clearCookie("refreshToken", {
         httpOnly: true,
@@ -138,5 +137,23 @@ export function authController(prisma) {
     }
   }
 
+  interface RegisterRequest {
+    firstName: string;
+    lastName?: string;
+    email: string;
+    password: string;
+  }
+  interface LoginRequest {
+    email: string;
+    password: string;
+    ip?: string;
+    userAgent?: string;
+  }
+  interface RefreshRequest {
+    rawRefresh: string;
+  }
+  interface LogoutRequest {
+    rawRefresh: string;
+  }
   return { register, login, refresh, logout };
 }

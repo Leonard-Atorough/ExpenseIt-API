@@ -1,13 +1,34 @@
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { parseExpiryToMs } from "../utils/timeUtils.ts";
 import "dotenv/config";
+import type { PrismaClient } from "@prisma/client";
 
-export function authService(prisma) {
+interface JwtPayloadWithRid extends JwtPayload {
+  rid: string;
+}
+
+export function authService(prisma: PrismaClient) {
   const saltRounds = 10;
-
-  async function register(params) {
+  // Use a discriminated union for clearer consumer inference.
+  async function register(params: {
+    firstName: string;
+    lastName?: string;
+    email: string;
+    password: string;
+  }): Promise<
+    | {
+        ok: true;
+        code: 201;
+        data: { id: string; firstName: string; lastName: string | null; email: string };
+      }
+    | {
+        ok: false;
+        code: 400 | 409 | 500;
+        message: string;
+      }
+  > {
     const { firstName, email, password } = params;
     let { lastName } = params;
 
@@ -47,7 +68,28 @@ export function authService(prisma) {
    * @returns {string} result.data.token
    * @returns {string} result.data.refreshToken
    */
-  async function login({ email, password, ip = "", userAgent = "" }) {
+  async function login({
+    email,
+    password,
+    ip,
+    userAgent,
+  }: {
+    email: string;
+    password: string;
+    ip?: string;
+    userAgent?: string;
+  }): Promise<
+    | {
+        ok: true;
+        code: 200;
+        data: {
+          user: { id: string; firstName: string; lastName: string | null; email: string };
+          accessToken: string;
+          refreshToken: string;
+        };
+      }
+    | { ok: false; code: 401; message: string }
+  > {
     const user = await prisma.user.findUnique({
       where: {
         email: email,
@@ -99,13 +141,23 @@ export function authService(prisma) {
    * @returns {string} result.data.refreshToken
    */
 
-  async function refresh(params) {
+  async function refresh(params: {
+    rawRefresh: string;
+  }): Promise<
+    | { ok: true; code: 200; data: { token: string; refreshToken: string } }
+    | { ok: false; code: 401 | 500; message: string; internal?: string }
+  > {
     const { rawRefresh } = params;
+
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+    if (!refreshSecret) {
+      return { ok: false, code: 500, message: "Refresh token secret not configured" };
+    }
+
     const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET);
 
-    const { sub, rid } = payload;
+    const { sub, rid } = payload as JwtPayloadWithRid;
 
-    // get the record from the DB
     const tokenRecord = await prisma.refreshToken.findUnique({
       where: {
         id: rid,
@@ -154,6 +206,36 @@ export function authService(prisma) {
     return { ok: true, code: 200, data: { token, refreshToken } };
   }
 
+  async function logout(params: {
+    rawRefresh: string;
+  }): Promise<
+    { ok: true; code: 200 } | { ok: false; code: 400 | 500; message: string; internal?: string }
+  > {
+    const { rawRefresh } = params;
+    let payload: JwtPayload;
+    try {
+      payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET) as JwtPayload;
+    } catch (err) {
+      return {
+        ok: false,
+        code: 400,
+        message: "Invalid refresh token",
+        internal: "JWT verification failed",
+      };
+    }
+    const { rid } = payload as JwtPayloadWithRid;
+
+    try {
+      await prisma.refreshToken.update({
+        where: { id: rid },
+        data: { revokedAt: new Date() },
+      });
+      return { ok: true, code: 200 };
+    } catch (err) {
+      return { ok: false, code: 500, message: "Failed to logout", internal: String(err) };
+    }
+  }
+
   /**
    *
    * @param {string} userId
@@ -162,15 +244,19 @@ export function authService(prisma) {
    * @returns {string} tokens.refreshToken
    * @returns {string} tokens.refreshId
    */
-  function IssueTokens(userId) {
+  function IssueTokens(userId: string): {
+    token: string;
+    refreshToken: string;
+    refreshId: string;
+  } {
     const token = jwt.sign({ sub: String(userId) }, process.env.JWT_ACCESS_SECRET, {
       expiresIn: process.env.ACCESS_TOKEN_EXP || "15m",
-    });
+    } as jwt.SignOptions);
     const refreshId = crypto.randomUUID();
     const refreshToken = jwt.sign({ sub: userId, rid: refreshId }, process.env.JWT_REFRESH_SECRET, {
       expiresIn: process.env.REFRESH_TOKEN_EXP || "7d",
-    });
+    } as jwt.SignOptions);
     return { token, refreshToken, refreshId };
   }
-  return { register, login, refresh };
+  return { register, login, refresh, logout };
 }

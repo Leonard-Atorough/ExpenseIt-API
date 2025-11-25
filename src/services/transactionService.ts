@@ -1,4 +1,6 @@
-export function transactionService(prisma) {
+import type { PrismaClient } from "@prisma/client";
+
+export function transactionService(prisma: PrismaClient) {
   async function fetchTransactions(params) {
     console.log("transaction router");
   }
