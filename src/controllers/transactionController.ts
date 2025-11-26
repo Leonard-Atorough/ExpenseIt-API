@@ -1,16 +1,18 @@
+import type { PrismaClient } from "@prisma/client";
 import { transactionService } from "../services/transactionService.js";
+import type { Request, Response, NextFunction } from "express";
 
-export function transactionController(prisma) {
+export function transactionController(prisma: PrismaClient) {
   const { fetchTransactions, fetchTransactionForId, addTransaction } = transactionService(prisma);
 
-  async function getTransactions(req, res) {
+  async function getTransactions(req: Request, res: Response, next: NextFunction) {
     res.send("Hello from transaction controller");
   }
 
-  async function getTransactionById(req, res, next) {
+  async function getTransactionById(req: Request, res: Response, next: NextFunction) {
     const { transactionId } = req.params;
     const id = parseInt(transactionId);
-    const userId = req.user.id;
+    const userId = req.user?.sub;
 
     try {
       const result = await fetchTransactionForId({ id: id, userId: userId });
@@ -26,7 +28,7 @@ export function transactionController(prisma) {
     }
   }
 
-  async function createTransaction(req, res) {}
+  async function createTransaction(req: Request, res: Response, next: NextFunction) {}
 
   return { getTransactions, getTransactionById, createTransaction };
 }

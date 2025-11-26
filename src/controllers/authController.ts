@@ -2,12 +2,17 @@ import "dotenv/config";
 import { authService } from "../services/authService.js";
 import { parseExpiryToMs } from "../utils/timeUtils.ts";
 import type { PrismaClient } from "@prisma/client";
+import type { Request, Response, NextFunction } from "express";
 
 // Missing features: account verification, password reset, multi-factor authentication.
 export function authController(prisma: PrismaClient) {
   const service = authService(prisma);
 
-  async function register(req, res, next) {
+  async function register(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
     console.log("Handling registration request");
     const { firstName, lastName, email, password } = req.body as RegisterRequest;
 
@@ -33,7 +38,7 @@ export function authController(prisma: PrismaClient) {
     }
   }
 
-  async function login(req, res, next) {
+  async function login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     console.log("Handling login request");
     try {
       const { email, password } = req.body as LoginRequest;
@@ -57,7 +62,7 @@ export function authController(prisma: PrismaClient) {
         secure: process.env.COOKIE_SECURE === "true",
         path: "/auth/refresh",
         maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
-        sameSite: "Lax",
+        sameSite: "lax",
       });
 
       console.log("Login successful, tokens set");
@@ -70,7 +75,11 @@ export function authController(prisma: PrismaClient) {
     }
   }
 
-  async function refresh(req, res, next) {
+  async function refresh(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
     console.log("Handling token refresh request");
     const rawRefresh = req.cookies.refreshToken as string;
     if (!rawRefresh) return res.status(401).json({ message: "No refresh token provided" });
@@ -90,15 +99,15 @@ export function authController(prisma: PrismaClient) {
         secure: process.env.COOKIE_SECURE === "true",
         path: "/auth/refresh",
         maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
-        sameSite: "Lax",
+        sameSite: "lax",
       });
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.COOKIE_SECURE === "true",
-        path: "auth/logout",
+        path: "/auth/logout",
         maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
-        sameSite: "Lax",
+        sameSite: "lax",
       });
 
       console.log("Token refresh successful, new tokens set");
@@ -109,10 +118,10 @@ export function authController(prisma: PrismaClient) {
     }
   }
 
-  async function logout(req, res, next) {
+  async function logout(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     console.log("Handling logout request");
 
-    const rawRefresh = req.cookies.refreshToken;
+    const rawRefresh = req.cookies.refreshToken as string;
     if (!rawRefresh) return res.status(400).json({ message: "No refresh token provided" });
 
     try {
@@ -126,7 +135,14 @@ export function authController(prisma: PrismaClient) {
         httpOnly: true,
         secure: process.env.COOKIE_SECURE === "true",
         path: "/auth/refresh",
-        sameSite: "Lax",
+        sameSite: "lax",
+      });
+
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.COOKIE_SECURE === "true",
+        path: "/auth/logout",
+        sameSite: "lax",
       });
 
       console.log("Logout successful, refresh token cleared");
@@ -148,12 +164,6 @@ export function authController(prisma: PrismaClient) {
     password: string;
     ip?: string;
     userAgent?: string;
-  }
-  interface RefreshRequest {
-    rawRefresh: string;
-  }
-  interface LogoutRequest {
-    rawRefresh: string;
   }
   return { register, login, refresh, logout };
 }

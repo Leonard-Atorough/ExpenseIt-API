@@ -1,5 +1,11 @@
 import type { PublicKeyInput, JsonWebKeyInput } from "crypto";
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+
+export interface AccessTokenPayload extends JwtPayload {
+  sub: string; // userId
+  iat?: number;
+  exp?: number;
+}
 
 // export function generateJwt(payload, secret, expiresIn) {
 //   // Implementation for generating JWT token using the provided payload, secret, and expiry
@@ -10,7 +16,16 @@ import jwt from "jsonwebtoken";
 export async function verifyJwt(
   token: string,
   secret: string | Buffer | PublicKeyInput | JsonWebKeyInput
-): Promise<jwt.JwtPayload> {
+): Promise<AccessTokenPayload> {
   const payload = jwt.verify(token, secret);
-  return payload as jwt.JwtPayload;
+
+  if (typeof payload === "string") {
+    throw new Error("Invalid token payload");
+  }
+
+  if (!payload.sub) {
+    throw new Error("Token payload missing 'sub' field");
+  }
+
+  return payload as AccessTokenPayload;
 }

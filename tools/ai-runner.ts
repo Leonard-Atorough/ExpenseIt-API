@@ -4,15 +4,15 @@ import { readdir } from "fs/promises";
 import { stat } from "fs/promises";
 import path from "path";
 
-async function readJobsYaml(filePath) {
+async function readJobsYaml(filePath: string): Promise<string> {
   const raw = await readFile(filePath, "utf8");
   return raw;
 }
 
-function parseJobs(yamlText) {
+function parseJobs(yamlText: string): Array<any> {
   // Very small YAML-ish parser tailored to the `.ai/jobs.yaml` structure used here.
   // Finds job blocks starting with "- id: <id>" and extracts simple keys.
-  const jobs = [];
+  const jobs: Array<any> = [];
   // Normalize line endings
   const text = yamlText.replace(/\r\n/g, "\n");
   // Find the jobs: section
@@ -26,7 +26,7 @@ function parseJobs(yamlText) {
     .map((s) => s.trim())
     .filter(Boolean);
   for (const entry of entries) {
-    const job = {};
+    const job: Record<string, any> = {};
     const lines = entry.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -75,9 +75,9 @@ function parseJobs(yamlText) {
   return jobs;
 }
 
-async function listFilesRecursive(dir, maxDepth = 4) {
-  const results = [];
-  async function recur(current, depth) {
+async function listFilesRecursive(dir: string, maxDepth = 4): Promise<string[]> {
+  const results: string[] = [];
+  async function recur(current: string, depth: number) {
     if (depth < 0) return;
     let entries;
     try {
@@ -114,7 +114,10 @@ async function run() {
   try {
     raw = await readJobsYaml(jobsYamlPath);
   } catch (err) {
-    console.error("Could not read .ai/jobs.yaml:", err.message);
+    console.error(
+      "Could not read .ai/jobs.yaml:",
+      err instanceof Error ? err.message : String(err)
+    );
     process.exit(1);
   }
 
@@ -151,7 +154,7 @@ async function run() {
         for (const f of files.slice(0, 10)) console.log("     ", path.relative(cwd, f));
         if (files.length > 10) console.log("     ...", files.length - 10, "more");
       } catch (err) {
-        console.log("   (could not list files)", err.message);
+        console.log("   (could not list files)", err instanceof Error ? err.message : String(err));
       }
     }
   }
@@ -172,7 +175,11 @@ async function run() {
           console.log(content.split("\n").slice(0, 200).join("\n"));
           console.log("--- end action ---\n");
         } catch (err) {
-          console.log("   (could not read action file)", actionPath, err.message);
+          console.log(
+            "   (could not read action file)",
+            actionPath,
+            err instanceof Error ? err.message : String(err)
+          );
         }
       }
     }

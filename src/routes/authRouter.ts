@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { authController } from "../controllers/authController.js";
+import type { PrismaClient } from "@prisma/client";
 
-export default function authRouter(prisma) {
+export default function authRouter(prisma: PrismaClient) {
   const authRouter = Router();
 
   const { register, login, refresh, logout } = authController(prisma);
@@ -18,5 +19,5 @@ export default function authRouter(prisma) {
 
   authRouter.post("/logout", logout);
 
-  return authRouter;
+  return authRouter as Router;
 }

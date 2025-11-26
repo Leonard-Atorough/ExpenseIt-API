@@ -21,8 +21,12 @@ export async function authenticationHandler(req: Request, res: Response, next: N
 
   try {
     const payload = await verifyJwt(token, process.env.JWT_ACCESS_SECRET);
-    // Attach all user info from payload to req.user
-    req.payload = payload as Record<string, any>;
+
+    if (typeof payload !== "object" || !payload.sub) {
+      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+    }
+
+    req.user = payload;
     next();
   } catch (err) {
     return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
