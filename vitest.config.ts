@@ -11,6 +11,7 @@ export default defineConfig({
       all: true,
       exclude: ["node_modules/", "tests/", "dist/", "generated/"],
     },
-    include: ["src/**/*.spec.ts"],
+    // tests aren't in source but root folder
+    include: ["**/*.spec.ts"],
   },
 });

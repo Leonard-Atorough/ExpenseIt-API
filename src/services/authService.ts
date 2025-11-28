@@ -27,27 +27,43 @@ export function authService(prisma: PrismaClient) {
         ok: false;
         code: 400 | 409 | 500;
         message: string;
+        internal?: string;
       }
   > {
     const { firstName, email, password } = params;
     let { lastName } = params;
 
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (existingUser) {
+      return { ok: false, code: 400, message: "Email already in use" };
+    }
+
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     lastName = lastName ?? null;
-    const user = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        account: {
-          create: {
-            password: hashedPassword,
+
+    let user;
+
+    try {
+      user = await prisma.user.create({
+        data: {
+          firstName,
+          lastName,
+          email,
+          account: {
+            create: {
+              password: hashedPassword,
+            },
           },
         },
-      },
-      select: { id: true, firstName: true, lastName: true, email: true },
-    });
+        select: { id: true, firstName: true, lastName: true, email: true },
+      });
+    } catch (error) {
+      return { ok: false, code: 500, message: "Failed to register user", internal: String(error) };
+    }
 
     return { ok: true, code: 201, data: user };
   }
