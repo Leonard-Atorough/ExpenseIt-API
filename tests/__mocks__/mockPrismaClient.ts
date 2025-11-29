@@ -1,4 +1,4 @@
-export const mockPrismaClient = {
+export const mockPrismaClient: MockPrismaClient = {
   user: {
     findUnique: vi.fn(),
     create: vi.fn(),
@@ -15,3 +15,21 @@ export const mockPrismaClient = {
     create: vi.fn(),
   },
 };
+
+export interface MockPrismaClient {
+  user: {
+    findUnique: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+  };
+  expense: {
+    findMany: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+  };
+  refreshToken: {
+    create: ReturnType<typeof vi.fn>;
+  };
+}

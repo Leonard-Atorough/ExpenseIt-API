@@ -61,11 +61,10 @@ export function authService(prisma: PrismaClient) {
         },
         select: { id: true, firstName: true, lastName: true, email: true },
       });
+      return { ok: true, code: 201, data: user };
     } catch (error) {
       return { ok: false, code: 500, message: "Failed to register user", internal: String(error) };
     }
-
-    return { ok: true, code: 201, data: user };
   }
 
   /**
@@ -106,42 +105,48 @@ export function authService(prisma: PrismaClient) {
       }
     | { ok: false; code: 401; message: string }
   > {
-    const user = await prisma.user.findUnique({
-      where: {
-        email: email,
-      },
-      include: { account: true },
-    });
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          email: email,
+        },
+        include: { account: true },
+      });
 
-    if (!user || !user.account) return { ok: false, code: 401, message: "Authentication failed" };
+      if (!user || !user.account) return { ok: false, code: 401, message: "Authentication failed" };
 
-    const passwordMatch = await bcrypt.compare(password, user.account.password);
+      const passwordMatch = await bcrypt.compare(password, user.account.password);
 
-    if (!passwordMatch) return { ok: false, code: 401, message: "Authentication failed" };
+      if (!passwordMatch)
+        return { ok: false, code: 401, message: "Authentication failed: Incorrect password" };
 
-    //create and persist tokens
-    const { token, refreshToken, refreshId } = IssueTokens(user.id);
+      //create and persist tokens
+      const { token, refreshToken, refreshId } = IssueTokens(user.id);
 
-    const date = Date.now();
-    // TODO - Consider token storage improvements like indexing by userId for easy revocation of all tokens
-    await prisma.refreshToken.create({
-      data: {
-        id: refreshId,
-        userId: user.id,
-        ip: ip ?? "",
-        userAgent: userAgent ?? "",
-        createdAt: new Date(date),
-        expiresAt: new Date(date + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP)),
-      },
-    });
+      const date = Date.now();
+      // TODO - Consider token storage improvements like indexing by userId for easy revocation of all tokens
 
-    const sanitized = {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName ?? null,
-      email: user.email,
-    };
-    return { ok: true, code: 200, data: { user: sanitized, accessToken: token, refreshToken } };
+      await prisma.refreshToken.create({
+        data: {
+          id: refreshId,
+          userId: user.id,
+          ip: ip ?? "",
+          userAgent: userAgent ?? "",
+          createdAt: new Date(date),
+          expiresAt: new Date(date + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP)),
+        },
+      });
+
+      const sanitized = {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName ?? null,
+        email: user.email,
+      };
+      return { ok: true, code: 200, data: { user: sanitized, accessToken: token, refreshToken } };
+    } catch (error) {
+      return { ok: false, code: 500, message: "Failed to login", internal: String(error) };
+    }
   }
 
   /**
@@ -200,7 +205,7 @@ export function authService(prisma: PrismaClient) {
     }
     // issue new tokens - Move to a helper function later
     const { token, refreshToken, refreshId } = IssueTokens(sub);
-    // persist the new refresh token and revoke the old one
+
     const date = Date.now();
     await prisma.$transaction([
       prisma.refreshToken.create({

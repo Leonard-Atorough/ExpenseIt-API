@@ -32,7 +32,7 @@ describe("Auth Service", () => {
     });
 
     it("should register a new user successfully", async () => {
-      const service = authService(mockPrismaClient as any);
+      const service = authService(mockPrismaClient as MockPrismaClient);
       const response = await service.register({
         firstName: "John",
         lastName: "Doe",
@@ -64,7 +64,7 @@ describe("Auth Service", () => {
 
     it("should not allow registration with an existing email", async () => {
       mockPrismaClient.user.findUnique = vi.fn().mockResolvedValue(mockRegisteredUser);
-      const service = authService(mockPrismaClient as any);
+      const service = authService(mockPrismaClient as MockPrismaClient);
       const response = await service.register({
         firstName: "Jane",
         lastName: "Smith",
@@ -81,7 +81,7 @@ describe("Auth Service", () => {
 
     it("should handle errors during registration", async () => {
       mockPrismaClient.user.create = vi.fn().mockRejectedValue(new Error("Database error"));
-      const service = authService(mockPrismaClient as any);
+      const service = authService(mockPrismaClient as MockPrismaClient);
       const response = await service.register({
         firstName: "Alice",
         lastName: "Johnson",
@@ -104,7 +104,7 @@ describe("Auth Service", () => {
       };
       mockPrismaClient.user.create = vi.fn().mockResolvedValue(mockRegisteredUserNoLastName);
 
-      const service = authService(mockPrismaClient as any);
+      const service = authService(mockPrismaClient as MockPrismaClient);
       const response = await service.register({
         firstName: "Bob",
         email: "bob@example.com",
@@ -134,7 +134,7 @@ describe("Auth Service", () => {
     });
 
     it("should hash the password before storing", async () => {
-      const service = authService(mockPrismaClient as any);
+      const service = authService(mockPrismaClient as MockPrismaClient);
       const plainPassword = "mySecretPassword";
       await service.register({
         firstName: "Charlie",
@@ -168,14 +168,20 @@ describe("Auth Service", () => {
           password: "hashedPassword123",
         },
       };
-      mockPrismaClient.user.findUnique.mockResolvedValue(mockUserWithAccount);
+
+      mockPrismaClient.user.findUnique = vi.fn().mockImplementation(({ where: { email } }) => {
+        if (email === "user@example.com") {
+          return Promise.resolve(mockUserWithAccount);
+        }
+        return Promise.resolve(null);
+      });
     });
 
     it("should login a user successfully with correct credentials", async () => {
       vi.spyOn(bcrypt, "compare").mockResolvedValue(true);
       vi.spyOn(jwt, "sign").mockReturnValue("mocked-jwt-token");
 
-      const service = authService(mockPrismaClient as any);
+      const service = authService(mockPrismaClient as MockPrismaClient);
 
       const response = await service.login({
         email: "user@example.com",
@@ -195,13 +201,111 @@ describe("Auth Service", () => {
       });
     });
 
-    it("should fail to login with incorrect email", async () => {});
+    it("should fail to login with incorrect email", async () => {
+      const service = authService(mockPrismaClient as MockPrismaClient);
 
-    it("should fail to login with incorrect password", async () => {});
+      const response = await service.login({
+        email: "incorrect@example.com",
+        password: "somePassword",
+      });
+      expect(response.ok).toBe(false);
+      expect(response.code).toBe(401);
+      expect(response.message).toBe("Authentication failed");
+      expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
+        where: { email: "incorrect@example.com" },
+        include: { account: true },
+      });
+    });
 
-    it("should handle errors during login", async () => {});
+    it("should fail to login with incorrect password", async () => {
+      vi.spyOn(bcrypt, "compare").mockResolvedValue(false);
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.login({
+        email: "user@example.com",
+        password: "wrongPassword",
+      });
+      expect(response.ok).toBe(false);
+      expect(response.code).toBe(401);
+      expect(response.message).toBe("Authentication failed: Incorrect password");
+      expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
+        where: { email: "user@example.com" },
+        include: { account: true },
+      });
+    });
+
+    it("should handle errors during login", async () => {
+      // Re-initialize the mock to reject for this test case
+      mockPrismaClient.user.findUnique = vi.fn().mockRejectedValue(new Error("Database error"));
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.login({
+        email: "user@example.com",
+        password: "somePassword",
+      });
+
+      expect(response.ok).toBe(false);
+      expect(response.code).toBe(500);
+      expect(response.message).toBe("Failed to login");
+      expect(response.internal).toBe("Error: Database error");
+      expect(mockPrismaClient.user.findUnique).toHaveBeenCalled();
+    });
   });
   // Refresh Token Test
+  describe("refreshToken", () => {
+    beforeEach(() => {
+      mockPrismaClient.refreshToken.create = vi.fn().mockResolvedValue({
+        id: "refresh-token-id-001",
+      });
+      mockPrismaClient.refreshToken.findUnique = vi
+        .fn()
+        .mockImplementation(({ where: { token } }) => {
+          if (token === "valid-refresh-token") {
+            return Promise.resolve({
+              id: "refresh-token-id-123",
+              userId: "user-id-123",
+              expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
+              revokedAt: null,
+            });
+          } else if (token === "expired-refresh-token") {
+            return Promise.resolve({
+              id: "refresh-token-id-456",
+              userId: "user-id-123",
+              expiresAt: new Date(Date.now() - 1000 * 60 * 60), // 1 hour in the past
+              revokedAt: null,
+            });
+          } else if (token === "revoked-refresh-token") {
+            return Promise.resolve({
+              id: "refresh-token-id-789",
+              userId: "user-id-123",
+              expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
+              revokedAt: new Date(Date.now() - 1000 * 60 * 30), // revoked 30 minutes ago
+            });
+          }
+          return Promise.resolve(null);
+        });
+    });
+    it("should refresh token successfully with valid refresh token", async () => {
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.refresh({
+        rawRefresh: "valid-refresh-token",
+      });
+      expect(response.ok).toBe(true);
+      expect(response.code).toBe(200);
+      expect(response.data).toEqual({
+        token: expect.any(String),
+        refreshToken: expect.any(String),
+      });
+      expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalledWith({
+        where: { id: "refresh-token-id-001" },
+      });
+    });
+    it("should fail to refresh token with invalid refresh token", async () => {});
+    it("should fail to refresh token when refresh token is expired", async () => {});
+    it("should fail to refresh token when refresh token is revoked", async () => {});
+    it("should handle errors during token refresh", async () => {});
+  });
 
   // Logout User Test
 });
