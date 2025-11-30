@@ -1,8 +1,10 @@
 import { authService } from "../../src/services/authService";
-import { mockPrismaClient } from "../__mocks__/mockPrismaClient";
+import { mockPrismaClient, type MockPrismaClient } from "../__mocks__/mockPrismaClient";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-// Note: No need to directly import vitest, as the globals are automatically available
+import { vi, describe, beforeEach, expect, it } from "vitest";
+// Note: No need to directly import vitest, as the globals are automatically available but due to linting rules we import it here
+// TODO: review linting rules to avoid such imports in future
 
 // Converting these solitary unit tests into sociable tests with a mock database setup in the future
 

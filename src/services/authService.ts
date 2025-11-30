@@ -103,7 +103,7 @@ export function authService(prisma: PrismaClient) {
           refreshToken: string;
         };
       }
-    | { ok: false; code: 401; message: string }
+    | { ok: false; code: 401 | 500; message: string; internal?: string }
   > {
     try {
       const user = await prisma.user.findUnique({
