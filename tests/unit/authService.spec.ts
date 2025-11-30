@@ -257,33 +257,57 @@ describe("Auth Service", () => {
       mockPrismaClient.refreshToken.create = vi.fn().mockResolvedValue({
         id: "refresh-token-id-001",
       });
-      mockPrismaClient.refreshToken.findUnique = vi
+
+      vi.spyOn(jwt, "verify").mockImplementation((token: string) => {
+        if (token === "valid-refresh-token") {
+          return { sub: "user-id-123", rid: "refresh-token-id-valid" };
+        } else if (token === "expired-refresh-token") {
+          return { sub: "user-id-123", rid: "refresh-token-id-expired" };
+        } else if (token === "revoked-refresh-token") {
+          return { sub: "user-id-123", rid: "refresh-token-id-revoked" };
+        } else {
+          return { sub: "user-id-123", rid: "refresh-token-id-invalid" };
+        }
+      });
+
+      mockPrismaClient.refreshToken.findUnique = vi.fn().mockImplementation(({ where: { id } }) => {
+        if (id === "refresh-token-id-valid") {
+          return Promise.resolve({
+            id: "refresh-token-id-123",
+            userId: "user-id-123",
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
+            revokedAt: null,
+          });
+        } else if (id === "refresh-token-id-expired") {
+          return Promise.resolve({
+            id: "refresh-token-id-456",
+            userId: "user-id-123",
+            expiresAt: new Date(Date.now() - 1000 * 60 * 60), // 1 hour in the past
+            revokedAt: null,
+          });
+        } else if (id === "refresh-token-id-revoked") {
+          return Promise.resolve({
+            id: "refresh-token-id-789",
+            userId: "user-id-123",
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
+            revokedAt: new Date(Date.now() - 1000 * 60 * 30), // revoked 30 minutes ago
+          });
+        }
+        return Promise.resolve(null);
+      });
+
+      vi.spyOn(jwt, "sign").mockReturnValue("new-mocked-jwt-token");
+
+      mockPrismaClient.refreshToken.update = vi
         .fn()
-        .mockImplementation(({ where: { token } }) => {
-          if (token === "valid-refresh-token") {
-            return Promise.resolve({
-              id: "refresh-token-id-123",
-              userId: "user-id-123",
-              expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
-              revokedAt: null,
-            });
-          } else if (token === "expired-refresh-token") {
-            return Promise.resolve({
-              id: "refresh-token-id-456",
-              userId: "user-id-123",
-              expiresAt: new Date(Date.now() - 1000 * 60 * 60), // 1 hour in the past
-              revokedAt: null,
-            });
-          } else if (token === "revoked-refresh-token") {
-            return Promise.resolve({
-              id: "refresh-token-id-789",
-              userId: "user-id-123",
-              expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
-              revokedAt: new Date(Date.now() - 1000 * 60 * 30), // revoked 30 minutes ago
-            });
-          }
-          return Promise.resolve(null);
-        });
+        .mockResolvedValue({ id: "new-refresh-token-id" });
+
+      mockPrismaClient.$transaction = vi.fn().mockImplementation(async (operations: any[]) => {
+        for (const op of operations) {
+          await op;
+        }
+        return;
+      });
     });
     it("should refresh token successfully with valid refresh token", async () => {
       const service = authService(mockPrismaClient as MockPrismaClient);
@@ -298,10 +322,26 @@ describe("Auth Service", () => {
         refreshToken: expect.any(String),
       });
       expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalledWith({
-        where: { id: "refresh-token-id-001" },
+        where: { id: "refresh-token-id-valid" },
       });
     });
-    it("should fail to refresh token with invalid refresh token", async () => {});
+
+    it("should fail to refresh token with invalid refresh token", async () => {
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.refresh({
+        rawRefresh: "invalid-refresh-token",
+      });
+
+      expect(response.ok).toBe(false);
+      expect(response.code).toBe(401);
+      expect(response.message).toBe("Invalid refresh token");
+      expect(response.internal).toBe("Refresh token not found or revoked");
+      expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalledWith({
+        where: { id: "refresh-token-id-invalid" },
+      });
+    });
+
     it("should fail to refresh token when refresh token is expired", async () => {});
     it("should fail to refresh token when refresh token is revoked", async () => {});
     it("should handle errors during token refresh", async () => {});
