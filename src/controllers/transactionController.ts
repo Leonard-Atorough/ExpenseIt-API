@@ -5,6 +5,26 @@ import type { Request, Response, NextFunction } from "express";
 export function transactionController(prisma: PrismaClient) {
   const { fetchTransactions, fetchTransactionForId, addTransaction } = transactionService(prisma);
 
+  async function createTransaction(req: Request, res: Response, next: NextFunction) {
+    const userId = req.user?.sub;
+    const { amount, description, date } = req.body;
+
+    // Input validation can be added here by calling a validation helper (consider using Zod or Joi)
+
+    try {
+      const result = await addTransaction({
+        userId: userId,
+        amount: amount,
+        description: description,
+        date: new Date(date),
+      });
+      // res.status(201).json(result);
+    } catch (error) {
+      res.status(500).send("Oops! Something went wrong on our end. We'll look into it.");
+      next(new Error(error));
+    }
+  }
+
   async function getTransactions(req: Request, res: Response, next: NextFunction) {
     res.send("Hello from transaction controller");
   }
@@ -27,8 +47,6 @@ export function transactionController(prisma: PrismaClient) {
       next(new Error(error));
     }
   }
-
-  async function createTransaction(req: Request, res: Response, next: NextFunction) {}
 
   return { getTransactions, getTransactionById, createTransaction };
 }
