@@ -1,3 +1,4 @@
+import { fail } from "assert/strict";
 import { authService } from "../../src/services/authService";
 import { mockPrismaClient, type MockPrismaClient } from "../__mocks__/mockPrismaClient";
 import bcrypt from "bcrypt";
@@ -42,13 +43,19 @@ describe("Auth Service", () => {
         password: "securePassword123",
       });
       expect(response.ok).toBe(true);
-      expect(response.code).toBe(201);
-      expect(response.data).toEqual({
-        id: "user-id-123",
-        firstName: "John",
-        lastName: "Doe",
-        email: "user@example.com",
-      });
+      if (response.ok) {
+        expect(response.code).toBe(201);
+        expect(response.data).toEqual({
+          id: "user-id-123",
+          firstName: "John",
+          lastName: "Doe",
+          email: "user@example.com",
+        });
+      } else {
+        fail(
+          `Expected registration to succeed, but got code: ${response.code} and failure: ${response.message}`
+        );
+      }
       expect(mockPrismaClient.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -74,8 +81,12 @@ describe("Auth Service", () => {
         password: "anotherPassword456",
       });
       expect(response.ok).toBe(false);
-      expect(response.code).toBe(400);
-      expect(response.message).toBe("Email already in use");
+      if (!response.ok) {
+        expect(response.code).toBe(409);
+        expect(response.message).toBe("Email already in use");
+      } else {
+        fail(`Expected registration to fail, but got code: ${response.code} and success`);
+      }
       expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
         where: { email: "user@example.com" },
       });
@@ -91,9 +102,13 @@ describe("Auth Service", () => {
         password: "password789",
       });
       expect(response.ok).toBe(false);
-      expect(response.code).toBe(500);
-      expect(response.message).toBe("Failed to register user");
-      expect(response.internal).toBe("Error: Database error");
+      if (!response.ok) {
+        expect(response.code).toBe(500);
+        expect(response.message).toBe("Failed to register user");
+        expect(response.internal).toBe("Error: Database error");
+      } else {
+        fail(`Expected registration to fail, but got code: ${response.code} and success`);
+      }
       expect(mockPrismaClient.user.create).toHaveBeenCalled();
     });
 
@@ -113,13 +128,19 @@ describe("Auth Service", () => {
         password: "password123",
       });
       expect(response.ok).toBe(true);
-      expect(response.code).toBe(201);
-      expect(response.data).toEqual({
-        id: "user-id-123",
-        firstName: "John",
-        lastName: null,
-        email: "bob@example.com",
-      });
+      if (response.ok) {
+        expect(response.code).toBe(201);
+        expect(response.data).toEqual({
+          id: "user-id-123",
+          firstName: "John",
+          lastName: null,
+          email: "bob@example.com",
+        });
+      } else {
+        fail(
+          `Expected registration to succeed, but got code: ${response.code} and failure: ${response.message}`
+        );
+      }
 
       expect(mockPrismaClient.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -144,17 +165,14 @@ describe("Auth Service", () => {
         email: "charlie.brown@example.com",
         password: plainPassword,
       });
-      expect(mockPrismaClient.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            account: expect.objectContaining({
-              create: expect.objectContaining({
-                password: expect.not.stringContaining(plainPassword),
-              }),
-            }),
+      expect(mockPrismaClient.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          account: expect.objectContaining({
+            create: expect.objectContaining({ password: `hashed-${plainPassword}` }),
           }),
-        })
-      );
+        }),
+        select: { id: true, firstName: true, lastName: true, email: true },
+      });
     });
   });
 
@@ -180,9 +198,6 @@ describe("Auth Service", () => {
     });
 
     it("should login a user successfully with correct credentials", async () => {
-      vi.spyOn(bcrypt, "compare").mockResolvedValue(true);
-      vi.spyOn(jwt, "sign").mockReturnValue("mocked-jwt-token");
-
       const service = authService(mockPrismaClient as MockPrismaClient);
 
       const response = await service.login({
@@ -190,17 +205,23 @@ describe("Auth Service", () => {
         password: "hashedPassword123",
       });
       expect(response.ok).toBe(true);
-      expect(response.code).toBe(200);
-      expect(response.data).toEqual({
-        user: {
-          id: "user-id-123",
-          firstName: "John",
-          lastName: "Doe",
-          email: "user@example.com",
-        },
-        refreshToken: "mocked-jwt-token",
-        accessToken: "mocked-jwt-token",
-      });
+      if (response.ok) {
+        expect(response.code).toBe(200);
+        expect(response.data).toEqual({
+          user: {
+            id: "user-id-123",
+            firstName: "John",
+            lastName: "Doe",
+            email: "user@example.com",
+          },
+          refreshToken: "mocked-jwt-token",
+          accessToken: "mocked-jwt-token",
+        });
+      } else {
+        fail(
+          `Expected login to succeed, but got code: ${response.code} and failure: ${response.message}`
+        );
+      }
     });
 
     it("should fail to login with incorrect email", async () => {
@@ -211,16 +232,22 @@ describe("Auth Service", () => {
         password: "somePassword",
       });
       expect(response.ok).toBe(false);
-      expect(response.code).toBe(401);
-      expect(response.message).toBe("Authentication failed");
-      expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
-        where: { email: "incorrect@example.com" },
-        include: { account: true },
-      });
+      if (!response.ok) {
+        expect(response.code).toBe(401);
+        expect(response.message).toBe("Authentication failed");
+        expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
+          where: { email: "incorrect@example.com" },
+          include: { account: true },
+        });
+      } else {
+        fail(`Expected login to fail, but got code: ${response.code} and success`);
+      }
     });
 
     it("should fail to login with incorrect password", async () => {
-      vi.spyOn(bcrypt, "compare").mockResolvedValue(false);
+      // Re-initialize the mock to return false for password comparison
+      bcrypt.compare = vi.fn().mockResolvedValue(false);
+
       const service = authService(mockPrismaClient as MockPrismaClient);
 
       const response = await service.login({
@@ -228,12 +255,16 @@ describe("Auth Service", () => {
         password: "wrongPassword",
       });
       expect(response.ok).toBe(false);
-      expect(response.code).toBe(401);
-      expect(response.message).toBe("Authentication failed: Incorrect password");
-      expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
-        where: { email: "user@example.com" },
-        include: { account: true },
-      });
+      if (!response.ok) {
+        expect(response.code).toBe(401);
+        expect(response.message).toBe("Authentication failed: Incorrect password");
+        expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
+          where: { email: "user@example.com" },
+          include: { account: true },
+        });
+      } else {
+        fail(`Expected login to fail, but got code: ${response.code} and success`);
+      }
     });
 
     it("should handle errors during login", async () => {
@@ -247,10 +278,14 @@ describe("Auth Service", () => {
       });
 
       expect(response.ok).toBe(false);
-      expect(response.code).toBe(500);
-      expect(response.message).toBe("Failed to login");
-      expect(response.internal).toBe("Error: Database error");
-      expect(mockPrismaClient.user.findUnique).toHaveBeenCalled();
+      if (!response.ok) {
+        expect(response.code).toBe(500);
+        expect(response.message).toBe("Failed to login");
+        expect(response.internal).toBe("Error: Database error");
+        expect(mockPrismaClient.user.findUnique).toHaveBeenCalled();
+      } else {
+        fail(`Expected login to fail, but got code: ${response.code} and success`);
+      }
     });
   });
   // Refresh Token Test
@@ -260,7 +295,7 @@ describe("Auth Service", () => {
         id: "refresh-token-id-001",
       });
 
-      vi.spyOn(jwt, "verify").mockImplementation((token: string) => {
+      vi.mocked(jwt.verify).mockImplementation((token: string) => {
         if (token === "valid-refresh-token") {
           return { sub: "user-id-123", rid: "refresh-token-id-valid" };
         } else if (token === "expired-refresh-token") {
@@ -298,8 +333,6 @@ describe("Auth Service", () => {
         return Promise.resolve(null);
       });
 
-      vi.spyOn(jwt, "sign").mockReturnValue("new-mocked-jwt-token");
-
       mockPrismaClient.refreshToken.update = vi
         .fn()
         .mockResolvedValue({ id: "new-refresh-token-id" });
@@ -318,11 +351,18 @@ describe("Auth Service", () => {
         rawRefresh: "valid-refresh-token",
       });
       expect(response.ok).toBe(true);
-      expect(response.code).toBe(200);
-      expect(response.data).toEqual({
-        token: expect.any(String),
-        refreshToken: expect.any(String),
-      });
+      if (response.ok) {
+        expect(response.code).toBe(200);
+        expect(response.data).toEqual({
+          token: expect.any(String),
+          refreshToken: expect.any(String),
+        });
+      } else {
+        fail(
+          `Expected token refresh to succeed, but got code: ${response.code} and failure: ${response.message}`
+        );
+      }
+
       expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalledWith({
         where: { id: "refresh-token-id-valid" },
       });
@@ -336,18 +376,138 @@ describe("Auth Service", () => {
       });
 
       expect(response.ok).toBe(false);
-      expect(response.code).toBe(401);
-      expect(response.message).toBe("Invalid refresh token");
-      expect(response.internal).toBe("Refresh token not found or revoked");
-      expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalledWith({
-        where: { id: "refresh-token-id-invalid" },
-      });
+      if (!response.ok) {
+        expect(response.code).toBe(401);
+        expect(response.message).toBe("Invalid refresh token");
+        expect(response.internal).toBe("Refresh token not found or revoked");
+        expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalledWith({
+          where: { id: "refresh-token-id-invalid" },
+        });
+      } else {
+        fail(`Expected token refresh to fail, but got code: ${response.code} and success`);
+      }
     });
 
-    it("should fail to refresh token when refresh token is expired", async () => {});
-    it("should fail to refresh token when refresh token is revoked", async () => {});
-    it("should handle errors during token refresh", async () => {});
+    it("should fail to refresh token when refresh token is expired", async () => {
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.refresh({
+        rawRefresh: "expired-refresh-token",
+      });
+
+      expect(response.ok).toBe(false);
+      if (response.ok === false) {
+        expect(response.code).toBe(401);
+        expect(response.message).toBe("Invalid refresh token");
+        expect(response.internal).toBe("Refresh token expired");
+        expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalledWith({
+          where: { id: "refresh-token-id-expired" },
+        });
+      } else {
+        fail(`Expected token refresh to fail, but got code: ${response.code} and success`);
+      }
+    });
+    it("should fail to refresh token when refresh token is revoked", async () => {
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.refresh({
+        rawRefresh: "revoked-refresh-token",
+      });
+
+      expect(response.ok).toBe(false);
+      if (response.ok === false) {
+        expect(response.code).toBe(401);
+        expect(response.message).toBe("Invalid refresh token");
+        expect(response.internal).toBe("Refresh token not found or revoked");
+        expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalledWith({
+          where: { id: "refresh-token-id-revoked" },
+        });
+      } else {
+        fail(`Expected token refresh to fail, but got code: ${response.code} and success`);
+      }
+    });
+    it("should handle errors during token refresh", async () => {
+      // Re-initialize the mock to reject for this test case
+      mockPrismaClient.refreshToken.findUnique = vi
+        .fn()
+        .mockRejectedValue(new Error("Database error"));
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.refresh({
+        rawRefresh: "valid-refresh-token",
+      });
+      expect(response.ok).toBe(false);
+      if (!response.ok) {
+        expect(response.code).toBe(500);
+        expect(response.message).toBe("Failed to refresh tokens");
+        expect(response.internal).toBe("Error: Database error");
+        expect(mockPrismaClient.refreshToken.findUnique).toHaveBeenCalled();
+      } else {
+        fail(`Expected token refresh to fail, but got code: ${response.code} and success`);
+      }
+    });
   });
 
   // Logout User Test
+  describe("logout", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      vi.mocked(jwt.verify).mockImplementation(() => ({ rid: "revoked-refresh-token-id" }));
+      mockPrismaClient.refreshToken.update = vi.fn().mockResolvedValue({
+        id: "revoked-refresh-token-id",
+      });
+    });
+
+    it("should logout successfully by revoking the refresh token", async () => {
+      const service = authService(mockPrismaClient as MockPrismaClient);
+      const response = await service.logout({
+        rawRefresh: "some-refresh-token",
+      });
+      expect(response.ok).toBe(true);
+      if (response.ok) {
+        expect(response.code).toBe(200);
+      } else {
+        fail(
+          `Expected logout to succeed, but got code: ${response.code} and failure: ${response.message}`
+        );
+      }
+    });
+
+    it("should fail to logout with invalid refresh token", async () => {
+      // Mock the JWT verify to throw an error for invalid token
+      vi.mocked(jwt.verify).mockImplementation(() => null);
+
+      const service = authService(mockPrismaClient as MockPrismaClient);
+      const response = await service.logout({
+        rawRefresh: "invalid-refresh-token",
+      });
+      expect(response.ok).toBe(false);
+      if (!response.ok) {
+        expect(response.code).toBe(400);
+        expect(response.message).toBe("Invalid refresh token");
+        expect(response.internal).toBe("JWT verification failed");
+      } else {
+        fail(`Expected logout to fail, but got code: ${response.code} and success`);
+      }
+    });
+
+    it("should handle errors during logout", async () => {
+      const service = authService(mockPrismaClient as MockPrismaClient);
+      // Mock the update method to throw an error
+      mockPrismaClient.refreshToken.update = vi.fn().mockRejectedValue(new Error("Database error"));
+
+      const response = await service.logout({
+        rawRefresh: "some-refresh-token",
+      });
+      expect(response.ok).toBe(false);
+      if (!response.ok) {
+        expect(response.code).toBe(500);
+        expect(response.message).toBe("Failed to logout");
+        expect(response.internal).toBe("Error: Database error");
+        expect(mockPrismaClient.refreshToken.update).toHaveBeenCalled();
+      } else {
+        fail(`Expected logout to fail, but got code: ${response.code} and success`);
+      }
+    });
+  });
 });

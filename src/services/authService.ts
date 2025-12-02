@@ -38,7 +38,7 @@ export function authService(prisma: PrismaClient) {
     });
 
     if (existingUser) {
-      return { ok: false, code: 400, message: "Email already in use" };
+      return { ok: false, code: 409, message: "Email already in use" };
     }
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -169,89 +169,88 @@ export function authService(prisma: PrismaClient) {
     | { ok: false; code: 401 | 500; message: string; internal?: string }
   > {
     const { rawRefresh } = params;
+    try {
+      const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET);
 
-    const refreshSecret = process.env.JWT_REFRESH_SECRET;
-    if (!refreshSecret) {
-      return { ok: false, code: 500, message: "Refresh token secret not configured" };
-    }
+      const { sub, rid } = payload as JwtPayloadWithRid;
 
-    const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET);
-
-    const { sub, rid } = payload as JwtPayloadWithRid;
-
-    const tokenRecord = await prisma.refreshToken.findUnique({
-      where: {
-        id: rid,
-      },
-    });
-
-    if (!tokenRecord || tokenRecord.userId !== sub || tokenRecord.revokedAt) {
-      return {
-        ok: false,
-        code: 401,
-        message: "Invalid refresh token",
-        internal: "Refresh token not found or revoked",
-      };
-    }
-    // TODO If the validation here fails, also log them out. Pass a unified error message to avoid giving clues to attackers
-    // Pass an internal message to the controller for logging and to trigger any security workflows
-    if (new Date(tokenRecord.expiresAt).getTime() < Date.now()) {
-      return {
-        ok: false,
-        code: 401,
-        message: "Invalid refresh token",
-        internal: "Refresh token expired",
-      };
-    }
-    // issue new tokens - Move to a helper function later
-    const { token, refreshToken, refreshId } = IssueTokens(sub);
-
-    const date = Date.now();
-    await prisma.$transaction([
-      prisma.refreshToken.create({
-        data: {
-          id: refreshId,
-          userId: sub,
-          ip: tokenRecord.ip ?? "",
-          userAgent: tokenRecord.userAgent ?? "",
-          createdAt: new Date(date),
-          expiresAt: new Date(date + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP)),
+      const tokenRecord = await prisma.refreshToken.findUnique({
+        where: {
+          id: rid,
         },
-      }),
-      prisma.refreshToken.update({
-        where: { id: rid },
-        data: { revokedAt: new Date() },
-      }),
-    ]);
+      });
 
-    return { ok: true, code: 200, data: { token, refreshToken } };
+      if (!tokenRecord || tokenRecord.userId !== sub || tokenRecord.revokedAt) {
+        return {
+          ok: false,
+          code: 401,
+          message: "Invalid refresh token",
+          internal: "Refresh token not found or revoked",
+        };
+      }
+      // TODO If the validation here fails, also log them out. Pass a unified error message to avoid giving clues to attackers
+      // Pass an internal message to the controller for logging and to trigger any security workflows
+      if (new Date(tokenRecord.expiresAt).getTime() < Date.now()) {
+        return {
+          ok: false,
+          code: 401,
+          message: "Invalid refresh token",
+          internal: "Refresh token expired",
+        };
+      }
+      // issue new tokens - Move to a helper function later
+      const { token, refreshToken, refreshId } = IssueTokens(sub);
+
+      const date = Date.now();
+      await prisma.$transaction([
+        prisma.refreshToken.create({
+          data: {
+            id: refreshId,
+            userId: sub,
+            ip: tokenRecord.ip ?? "",
+            userAgent: tokenRecord.userAgent ?? "",
+            createdAt: new Date(date),
+            expiresAt: new Date(date + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP)),
+          },
+        }),
+        prisma.refreshToken.update({
+          where: { id: rid },
+          data: { revokedAt: new Date() },
+        }),
+      ]);
+      return { ok: true, code: 200, data: { token, refreshToken } };
+    } catch (err) {
+      return { ok: false, code: 500, message: "Failed to refresh tokens", internal: String(err) };
+    }
   }
 
   async function logout(params: {
     rawRefresh: string;
   }): Promise<
-    { ok: true; code: 200 } | { ok: false; code: 400 | 500; message: string; internal?: string }
+    | { ok: true; code: 200; message: string }
+    | { ok: false; code: 400 | 500; message: string; internal?: string }
   > {
     const { rawRefresh } = params;
-    let payload: JwtPayload;
-    try {
-      payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET) as JwtPayload;
-    } catch (err) {
-      return {
-        ok: false,
-        code: 400,
-        message: "Invalid refresh token",
-        internal: "JWT verification failed",
-      };
-    }
-    const { rid } = payload as JwtPayloadWithRid;
 
     try {
+      const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET) as JwtPayload;
+
+      if (!payload || !payload.rid) {
+        return {
+          ok: false,
+          code: 400,
+          message: "Invalid refresh token",
+          internal: "JWT verification failed",
+        };
+      }
+
+      const { rid } = payload as JwtPayloadWithRid;
+
       await prisma.refreshToken.update({
         where: { id: rid },
         data: { revokedAt: new Date() },
       });
-      return { ok: true, code: 200 };
+      return { ok: true, code: 200, message: "Logged out successfully" };
     } catch (err) {
       return { ok: false, code: 500, message: "Failed to logout", internal: String(err) };
     }
