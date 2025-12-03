@@ -2,6 +2,7 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { parseExpiryToMs } from "../utils/timeUtils.ts";
+import { type AccessTokenPayload, signJwt } from "../utils/jwtUtils.ts";
 import "dotenv/config";
 import type { PrismaClient } from "@prisma/client";
 
@@ -121,7 +122,7 @@ export function authService(prisma: PrismaClient) {
         return { ok: false, code: 401, message: "Authentication failed: Incorrect password" };
 
       //create and persist tokens
-      const { token, refreshToken, refreshId } = IssueTokens(user.id);
+      const { token, refreshToken, refreshId } = await IssueTokens(user.id);
 
       const date = Date.now();
       // TODO - Consider token storage improvements like indexing by userId for easy revocation of all tokens
@@ -199,7 +200,7 @@ export function authService(prisma: PrismaClient) {
         };
       }
       // issue new tokens - Move to a helper function later
-      const { token, refreshToken, refreshId } = IssueTokens(sub);
+      const { token, refreshToken, refreshId } = await IssueTokens(sub);
 
       const date = Date.now();
       await prisma.$transaction([
@@ -264,18 +265,22 @@ export function authService(prisma: PrismaClient) {
    * @returns {string} tokens.refreshToken
    * @returns {string} tokens.refreshId
    */
-  function IssueTokens(userId: string): {
+  async function IssueTokens(userId: string): Promise<{
     token: string;
     refreshToken: string;
     refreshId: string;
-  } {
-    const token = jwt.sign(
-      { sub: String(userId), exp: parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") },
+  }> {
+    const token = await signJwt(
+      { sub: String(userId), exp: parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") / 1000 },
       process.env.JWT_ACCESS_SECRET
     );
     const refreshId = crypto.randomUUID();
-    const refreshToken = jwt.sign(
-      { sub: userId, rid: refreshId, exp: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") },
+    const refreshToken = await signJwt(
+      {
+        sub: userId,
+        rid: refreshId,
+        exp: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") / 1000,
+      },
       process.env.JWT_REFRESH_SECRET
     );
     return { token, refreshToken, refreshId };

@@ -15,6 +15,11 @@ vi.mock("../../src/utils/prismaClient", () => {
   };
 });
 
+vi.mock("../../src/utils/jwtUtils.ts", () => ({
+  signJwt: vi.fn().mockResolvedValue("mocked-jwt-token"),
+  verifyJwt: vi.fn(),
+}));
+
 const mockRegisteredUser = {
   id: "user-id-123",
   email: "user@example.com",
@@ -188,6 +193,16 @@ describe("Auth Service", () => {
           password: "hashedPassword123",
         },
       };
+
+      // Mock bcrypt.compare to simulate password verification
+      bcrypt.compare = vi.fn().mockResolvedValue(true);
+
+      // Mock JWT verify to simulate token verification
+      jwt.verify = vi.fn().mockImplementation((token: string) => {
+        if (token === "mocked-jwt-token") {
+          return { sub: "user-id-123" };
+        }
+      });
 
       mockPrismaClient.user.findUnique = vi.fn().mockImplementation(({ where: { email } }) => {
         if (email === "user@example.com") {

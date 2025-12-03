@@ -2,9 +2,17 @@ import "dotenv/config";
 import { authService } from "../services/authService.js";
 import { parseExpiryToMs } from "../utils/timeUtils.ts";
 import type { PrismaClient } from "@prisma/client";
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction, CookieOptions } from "express";
 
+const REFRESH_COOKIE_CONFIG: CookieOptions = {
+  httpOnly: true,
+  secure: process.env.COOKIE_SECURE === "true",
+  path: "/auth",
+  maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
+  sameSite: "lax",
+};
 // Missing features: account verification, password reset, multi-factor authentication.
+// TODO: Refactor error handling to use custom Error classes for better granularity.
 export function authController(prisma: PrismaClient) {
   const service = authService(prisma);
 
@@ -57,13 +65,7 @@ export function authController(prisma: PrismaClient) {
       const { accessToken, refreshToken, user } = result.data;
 
       //for more info on res and all its methods https://expressjs.com/en/5x/api.html#res
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.COOKIE_SECURE === "true",
-        path: "/auth/refresh",
-        maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
-        sameSite: "lax",
-      });
+      res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_CONFIG);
 
       console.log("Login successful, tokens set");
       // In the future we can consider adding roles/permissions to the user object here
@@ -94,21 +96,7 @@ export function authController(prisma: PrismaClient) {
       // TODO - Log the refresh event. Question is where to log it. Maybe a new collection/table for auth events?
       const { token, refreshToken } = result.data;
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.COOKIE_SECURE === "true",
-        path: "/auth/refresh",
-        maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
-        sameSite: "lax",
-      });
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.COOKIE_SECURE === "true",
-        path: "/auth/logout",
-        maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
-        sameSite: "lax",
-      });
+      res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_CONFIG);
 
       console.log("Token refresh successful, new tokens set");
       return res.status(result.code).json({ accessToken: token });
@@ -131,19 +119,7 @@ export function authController(prisma: PrismaClient) {
           .status(result.code)
           .json({ message: "message" in result ? result.message : "Logout failed" });
 
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.COOKIE_SECURE === "true",
-        path: "/auth/refresh",
-        sameSite: "lax",
-      });
-
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.COOKIE_SECURE === "true",
-        path: "/auth/logout",
-        sameSite: "lax",
-      });
+      res.clearCookie("refreshToken", REFRESH_COOKIE_CONFIG);
 
       console.log("Logout successful, refresh token cleared");
       return res.status(result.code).json({ message: "Logged out successfully" });

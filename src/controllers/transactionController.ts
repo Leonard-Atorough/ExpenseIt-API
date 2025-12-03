@@ -7,31 +7,40 @@ export function transactionController(prisma: PrismaClient) {
 
   async function createTransaction(req: Request, res: Response, next: NextFunction) {
     const userId = req.user?.sub;
-    const { amount, description, date } = req.body;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-    // Input validation can be added here by calling a validation helper (consider using Zod or Joi)
+    const { amount, description, date } = req.body;
 
     try {
       const result = await addTransaction({
-        userId: userId,
-        amount: amount,
-        description: description,
+        userId,
+        amount,
+        description,
         date: new Date(date),
       });
-      // res.status(201).json(result);
-    } catch (error) {
-      res.status(500).send("Oops! Something went wrong on our end. We'll look into it.");
-      next(new Error(error));
-    }
-  }
 
-  async function getTransactions(req: Request, res: Response, next: NextFunction) {
-    res.send("Hello from transaction controller");
+      if (!result.ok) {
+        return res.status(result.code ?? 400).json({ message: result.message });
+      }
+
+      res.status(result.code ?? 201);
+      if (result.transaction?.id) {
+        res.setHeader("Location", `/transactions/${result.transaction.id}`);
+      }
+      return res.json(result.transaction);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Unknown error");
+      res.status(500).send("An error occurred while creating the transaction.");
+      return next(error);
+    }
   }
 
   async function getTransactionById(req: Request, res: Response, next: NextFunction) {
     const { transactionId } = req.params;
     const id = parseInt(transactionId);
+
     const userId = req.user?.sub;
 
     try {
@@ -46,6 +55,10 @@ export function transactionController(prisma: PrismaClient) {
       res.status(500).send("Oops! Something went wrong on our end. We'll look into it.");
       next(new Error(error));
     }
+  }
+
+  async function getTransactions(req: Request, res: Response, next: NextFunction) {
+    res.send("Hello from transaction controller");
   }
 
   return { getTransactions, getTransactionById, createTransaction };
