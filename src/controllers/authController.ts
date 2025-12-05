@@ -7,7 +7,7 @@ import type { Request, Response, NextFunction, CookieOptions } from "express";
 const REFRESH_COOKIE_CONFIG: CookieOptions = {
   httpOnly: true,
   secure: process.env.COOKIE_SECURE === "true",
-  path: "/auth",
+  path: "/api/auth",
   maxAge: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d"),
   sameSite: "lax",
 };
@@ -31,6 +31,7 @@ export function authController(prisma: PrismaClient) {
       const result = await service.register({ firstName, lastName, email, password });
 
       if (!result.ok) {
+        console.warn("Registration failed:", result.message);
         return res
           .status(result.code)
           .json({ message: "message" in result ? result.message : "Registration failed" });

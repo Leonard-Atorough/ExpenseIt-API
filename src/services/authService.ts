@@ -114,12 +114,11 @@ export function authService(prisma: PrismaClient) {
         include: { account: true },
       });
 
-      if (!user || !user.account) return { ok: false, code: 401, message: "Authentication failed" };
+      if (!user || !user.account) return { ok: false, code: 401, message: "Login failed" };
 
       const passwordMatch = await bcrypt.compare(password, user.account.password);
 
-      if (!passwordMatch)
-        return { ok: false, code: 401, message: "Authentication failed: Incorrect password" };
+      if (!passwordMatch) return { ok: false, code: 401, message: "Login failed" };
 
       //create and persist tokens
       const { token, refreshToken, refreshId } = await IssueTokens(user.id);

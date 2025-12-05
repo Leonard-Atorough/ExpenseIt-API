@@ -15,7 +15,7 @@
     "ai:list": "node tools/ai-runner.js list",
     "ai:run": "node tools/ai-runner.js",
     "build": "tsc",
-    "dev": "ts-node src/index.ts",
+    "dev": "tsx index.ts",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "test": "vitest run",
@@ -49,6 +49,7 @@
     "prisma": "^6.19.0",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.14"
   }
