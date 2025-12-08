@@ -31,7 +31,10 @@ export function authController(prisma: PrismaClient) {
       const result = await service.register({ firstName, lastName, email, password });
 
       if (!result.ok) {
-        console.warn("Registration failed:", result.message);
+        console.warn(
+          "Registration failed:",
+          "message" in result ? result.message : "Unknown error"
+        );
         return res
           .status(result.code)
           .json({ message: "message" in result ? result.message : "Registration failed" });

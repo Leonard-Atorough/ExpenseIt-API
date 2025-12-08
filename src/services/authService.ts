@@ -235,12 +235,12 @@ export function authService(prisma: PrismaClient) {
     try {
       const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET) as JwtPayload;
 
-      if (!payload || !payload.rid) {
+      if (!payload || typeof payload === "string" || !("rid" in payload)) {
         return {
           ok: false,
           code: 400,
           message: "Invalid refresh token",
-          internal: "JWT verification failed",
+          internal: "JWT payload missing rid",
         };
       }
 
@@ -252,6 +252,15 @@ export function authService(prisma: PrismaClient) {
       });
       return { ok: true, code: 200, message: "Logged out successfully" };
     } catch (err) {
+      // JWT verification errors (expired, invalid signature, malformed)
+      if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+        return {
+          ok: false,
+          code: 400,
+          message: "Invalid refresh token",
+          internal: String(err),
+        };
+      }
       return { ok: false, code: 500, message: "Failed to logout", internal: String(err) };
     }
   }
