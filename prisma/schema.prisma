@@ -35,7 +35,7 @@ model Account {
   password String
   dateCreated DateTime
   AuthenticatedAt DateTime?
-  isAuthenticated Bool @default(false)
+  isVerified Bool @default(false)
   user User @relation(fields: [userId], references: [id])
 }
 

@@ -64,7 +64,7 @@ export function authService(prisma: PrismaClient) {
             create: {
               password: hashedPassword,
               dateCreated: new Date(),
-              isAuthenticated: false,
+              isVerified: false,
             },
           },
           activationToken: {
@@ -118,16 +118,11 @@ export function authService(prisma: PrismaClient) {
       }
 
       await prisma.$transaction([
-        prisma.user.update({
-          where: { id: activationRecord.userId },
-          data: {
-            account: {
-              update: {
-                isAuthenticated: true,
-              },
-            },
-          },
+        prisma.account.update({
+          where: { userId: activationRecord.userId },
+          data: { isVerified: true },
         }),
+
         prisma.activationToken.update({
           where: { token: token },
           data: { isExpired: true },
@@ -212,7 +207,7 @@ export function authService(prisma: PrismaClient) {
       const sanitized = {
         id: user.id,
         firstName: user.firstName,
-        lastName: user.lastName ?? null,
+        lastName: user.lastName,
         email: user.email,
       };
       return { ok: true, code: 200, data: { user: sanitized, accessToken: token, refreshToken } };

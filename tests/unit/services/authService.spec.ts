@@ -1,6 +1,6 @@
 import { fail } from "assert/strict";
-import { authService } from "../../src/services/authService";
-import { mockPrismaClient, type MockPrismaClient } from "../__mocks__/mockPrismaClient";
+import { authService } from "@src/services/authService";
+import { mockPrismaClient, type MockPrismaClient } from "../../__mocks__/mockPrismaClient";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { vi, describe, beforeEach, expect, it } from "vitest";
@@ -45,7 +45,7 @@ describe("Auth Service", () => {
       expect(response.ok).toBe(true);
       if (response.ok) {
         expect(response.code).toBe(201);
-        expect(response.data).toEqual({
+        expect(response.user).toEqual({
           id: "user-id-123",
           firstName: "John",
           lastName: "Doe",
@@ -65,8 +65,20 @@ describe("Auth Service", () => {
             account: expect.objectContaining({
               create: expect.objectContaining({ password: expect.any(String) }),
             }),
+            activationToken: expect.objectContaining({
+              create: expect.objectContaining({
+                token: expect.any(String),
+                expiresAt: expect.any(Date),
+              }),
+            }),
           }),
-          select: { id: true, firstName: true, lastName: true, email: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            activationToken: { select: { token: true } },
+          },
         })
       );
     });
@@ -112,12 +124,12 @@ describe("Auth Service", () => {
       expect(mockPrismaClient.user.create).toHaveBeenCalled();
     });
 
-    it("should set lastName to null if not provided", async () => {
+    it("should set lastName to empty string if not provided", async () => {
       const mockRegisteredUserNoLastName = {
         id: "user-id-123",
         email: "bob@example.com",
         firstName: "John",
-        lastName: null,
+        lastName: "",
       };
       mockPrismaClient.user.create = vi.fn().mockResolvedValue(mockRegisteredUserNoLastName);
 
@@ -130,10 +142,10 @@ describe("Auth Service", () => {
       expect(response.ok).toBe(true);
       if (response.ok) {
         expect(response.code).toBe(201);
-        expect(response.data).toEqual({
+        expect(response.user).toEqual({
           id: "user-id-123",
           firstName: "John",
-          lastName: null,
+          lastName: "",
           email: "bob@example.com",
         });
       } else {
@@ -146,7 +158,7 @@ describe("Auth Service", () => {
         expect.objectContaining({
           data: expect.objectContaining({
             firstName: "Bob",
-            lastName: null,
+            lastName: "",
             email: "bob@example.com",
             account: expect.objectContaining({
               create: expect.objectContaining({ password: expect.any(String) }),
@@ -170,9 +182,121 @@ describe("Auth Service", () => {
           account: expect.objectContaining({
             create: expect.objectContaining({ password: `hashed-${plainPassword}` }),
           }),
+          activationToken: expect.objectContaining({
+            create: expect.objectContaining({
+              token: expect.any(String),
+              expiresAt: expect.any(Date),
+            }),
+          }),
         }),
-        select: { id: true, firstName: true, lastName: true, email: true },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          activationToken: { select: { token: true } },
+        },
       });
+    });
+  });
+
+  // Verify User Test
+  describe("verify", () => {
+    beforeEach(() => {
+      const mockUserWithAccountAndToken = {
+        id: "user-id-123",
+        email: "user@example.com",
+        firstName: "John",
+        lastName: "Doe",
+        account: {
+          password: "hashedPassword123",
+          isVerified: false,
+        },
+        activationToken: {
+          id: "activation-token-id-123",
+          token: "valid-token",
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
+          isExpired: false,
+        },
+      };
+
+      mockPrismaClient.activationToken.findUnique = vi.fn().mockResolvedValue({
+        id: "activation-token-id-123",
+        token: "valid-token",
+        userId: "user-id-123",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
+      });
+
+      mockPrismaClient.account.update.mockResolvedValue({
+        id: "account-id-123",
+        isVerified: true,
+      });
+      mockPrismaClient.activationToken.update.mockResolvedValue({
+        id: "activation-token-id-123",
+        token: "valid-token",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
+        isExpired: true,
+      });
+    });
+
+    it("should verify a user successfully with a valid token", async () => {
+      mockPrismaClient.activationToken.findUnique = vi.fn().mockResolvedValue({
+        id: "activation-token-id-123",
+        token: "valid-token",
+        userId: "user-id-123",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour in the future
+      });
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.verify({ token: "valid-token" });
+      expect(response.ok).toBe(true);
+      if (response.ok) {
+        expect(response.code).toBe(200);
+      } else {
+        fail(
+          `Expected verification to succeed, but got code: ${response.code} and failure: ${response.message}`
+        );
+      }
+
+      expect(mockPrismaClient.account.update).toHaveBeenCalledWith({
+        where: { userId: "user-id-123" },
+        data: { isVerified: true },
+      });
+      expect(mockPrismaClient.activationToken.update).toHaveBeenCalledWith({
+        where: { token: "valid-token" },
+        data: { isExpired: true },
+      });
+    });
+
+    it("should fail to verify user is verification token has expire", async () => {
+      mockPrismaClient.activationToken.findUnique = vi.fn().mockResolvedValue({
+        id: "activation-token-id-123",
+        token: "valid-token",
+        userId: "user-id-123",
+        expiresAt: new Date(Date.now() - 1000 * 60 * 60), //1 hour ago
+      });
+
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.verify({ token: "valid-token" });
+
+      expect(response.ok).toBe(false);
+      if ("message" in response)
+        expect(response.message).toBe("Invalid or expired verification token");
+    });
+
+    it("Should handle uncaught errors during verification", async () => {
+      mockPrismaClient.activationToken.findUnique = vi
+        .fn()
+        .mockRejectedValue(new Error("Database error"));
+
+      const service = authService(mockPrismaClient as MockPrismaClient);
+
+      const response = await service.verify({ token: "valid-token" });
+
+      expect(response.ok).toBe(false);
+      if (response.code) expect(response.code).toEqual(500);
+      if ("message" in response) expect(response.message).toBe("Failed to verify account");
     });
   });
 

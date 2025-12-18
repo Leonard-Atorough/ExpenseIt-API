@@ -23,7 +23,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration"
+    "test:integration": "vitest run tests/integration",
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

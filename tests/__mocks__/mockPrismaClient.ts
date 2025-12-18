@@ -14,6 +14,14 @@ export const mockPrismaClient: MockPrismaClient = {
     update: vi.fn(),
     delete: vi.fn(),
   },
+
+  account: {
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+
   expense: {
     findMany: vi.fn(),
     create: vi.fn(),
@@ -21,6 +29,13 @@ export const mockPrismaClient: MockPrismaClient = {
     delete: vi.fn(),
   },
   refreshToken: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    delete: vi.fn(),
+    update: vi.fn(),
+  },
+
+  activationToken: {
     create: vi.fn(),
     findUnique: vi.fn(),
     delete: vi.fn(),
@@ -36,6 +51,14 @@ export interface MockPrismaClient {
     update: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
+
+  account: {
+    findUnique: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+  };
+
   expense: {
     findMany: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
@@ -43,6 +66,13 @@ export interface MockPrismaClient {
     delete: ReturnType<typeof vi.fn>;
   };
   refreshToken: {
+    create: ReturnType<typeof vi.fn>;
+    findUnique: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
+
+  activationToken: {
     create: ReturnType<typeof vi.fn>;
     findUnique: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
