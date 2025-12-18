@@ -18,6 +18,15 @@ model User {
   refreshToken RefreshToken?
 }
 
+model activationToken {
+  id String @id 
+  userId Int @unique
+  token String
+  expiresAt DateTime
+  createdAt DateTime
+  user User  @relation(fields: [userId], references: [id])
+}
+
 model Account {
   id Int @id @default(autoincrement())
   userId Int @unique

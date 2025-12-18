@@ -30,7 +30,11 @@ export function authController(prisma: PrismaClient) {
 
       console.log("Registration successful for user:", result.data.email);
 
-      // A future enhancement could be to send a verification email here to confirm the user's email address.
+      // When a user registeres, we create an account with a boolean 'verified' field set to false.
+      // We send an email using an email service with a link containing a unique token and store that token in the DB with an expiry time.
+      // When the user clicks the link in the email is fires off a get request to our API with the token.
+      // We verify the token is valid and not expired, then set the 'verified' field to true.
+      // first step: email service. We will create it in services/emailService.ts
       return res.status(result.code).json({ user: result.data });
     } catch (err) {
       console.error("Failed to register account", err);
@@ -38,6 +42,14 @@ export function authController(prisma: PrismaClient) {
     }
   }
 
+  async function ConfirmReistration(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    console.log("Handling registration confirmation request");
+    const { token } = req.body;
+  }
   async function login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     console.log("Handling login request");
     try {

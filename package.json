@@ -15,7 +15,7 @@
     "ai:list": "node tools/ai-runner.js list",
     "ai:run": "node tools/ai-runner.js",
     "build": "tsc",
-    "dev": "ts-node src/index.ts",
+    "dev": "ts-node index.ts",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "test": "vitest run",
@@ -34,7 +34,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.11"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -43,6 +44,7 @@
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.1",
+    "@types/nodemailer": "^7.0.4",
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.14",
     "@vitest/ui": "^4.0.14",
