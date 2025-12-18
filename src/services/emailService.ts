@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import "dotenv/config";
 import type { PrismaClient } from "@prisma/client";
 
 export function emailService(prisma: PrismaClient) {
@@ -11,9 +12,8 @@ export function emailService(prisma: PrismaClient) {
     },
   });
 
-  async function sendVerificationEmail(email: string): Promise<void> {
+  async function sendVerificationEmail(email: string, token: string): Promise<void> {
     // Implementation to send email
-    const token = "some-unique-token"; // Generate a unique token for verification
     console.log(`Sending verification email to ${email} with token ${token}`);
     const verificationLink = `https://localhost:3000/auth/verify?token=${token}`;
     const mailOptions = {

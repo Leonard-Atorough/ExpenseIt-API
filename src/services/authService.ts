@@ -21,7 +21,8 @@ export function authService(prisma: PrismaClient) {
     | {
         ok: true;
         code: 201;
-        data: { id: string; firstName: string; lastName: string | null; email: string };
+        user: { id: string; firstName: string; lastName: string | null; email: string };
+        activationToken?: string;
       }
     | {
         ok: false;
@@ -43,9 +44,15 @@ export function authService(prisma: PrismaClient) {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    lastName = lastName ?? null;
+    lastName = lastName ?? "";
 
-    let user;
+    let user: {
+      id: string;
+      firstName: string;
+      lastName: string | null;
+      email: string;
+      activationToken?: { token: string };
+    };
 
     try {
       user = await prisma.user.create({
@@ -56,14 +63,79 @@ export function authService(prisma: PrismaClient) {
           account: {
             create: {
               password: hashedPassword,
+              dateCreated: new Date(),
+              isAuthenticated: false,
+            },
+          },
+          activationToken: {
+            create: {
+              token: crypto.randomUUID(),
+              createdAt: new Date(),
+              expiresAt: new Date(
+                Date.now() + parseExpiryToMs(process.env.VERIFICATION_TOKEN_EXP || "1d")
+              ),
+              isExpired: false,
             },
           },
         },
-        select: { id: true, firstName: true, lastName: true, email: true },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          activationToken: { select: { token: true } },
+        },
       });
-      return { ok: true, code: 201, data: user };
+      return { ok: true, code: 201, user, activationToken: user.activationToken?.token };
     } catch (error) {
       return { ok: false, code: 500, message: "Failed to register user", internal: String(error) };
+    }
+  }
+
+  async function verify(params: {
+    token: string;
+  }): Promise<
+    | { ok: true; code: 200 }
+    | { ok: false; code: 400 | 404 | 500; message: string; internal?: string }
+  > {
+    const { token } = params;
+    try {
+      const activationRecord = await prisma.activationToken.findUnique({
+        where: {
+          token: token,
+        },
+        include: {
+          user: true,
+        },
+      });
+
+      if (
+        !activationRecord ||
+        activationRecord.isExpired ||
+        activationRecord.expiresAt.getTime() < Date.now()
+      ) {
+        return { ok: false, code: 404, message: "Invalid or expired verification token" };
+      }
+
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: activationRecord.userId },
+          data: {
+            account: {
+              update: {
+                isAuthenticated: true,
+              },
+            },
+          },
+        }),
+        prisma.activationToken.update({
+          where: { token: token },
+          data: { isExpired: true },
+        }),
+      ]);
+      return { ok: true, code: 200 };
+    } catch (error) {
+      return { ok: false, code: 500, message: "Failed to verify account", internal: String(error) };
     }
   }
 
@@ -280,5 +352,5 @@ export function authService(prisma: PrismaClient) {
     );
     return { token, refreshToken, refreshId };
   }
-  return { register, login, refresh, logout };
+  return { register, verify, login, refresh, logout };
 }

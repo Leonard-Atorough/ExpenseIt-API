@@ -5,13 +5,15 @@ import type { PrismaClient } from "@prisma/client";
 export default function authRouter(prisma: PrismaClient) {
   const authRouter = Router();
 
-  const { register, login, refresh, logout } = authController(prisma);
+  const { register, verify, login, refresh, logout } = authController(prisma);
 
   authRouter.get("/", (req, res) => {
     res.status(200).json({ message: "Auth route is working" });
   });
 
   authRouter.post("/register", register);
+
+  authRouter.get("/verify", verify);
 
   authRouter.post("/refresh", refresh);
 

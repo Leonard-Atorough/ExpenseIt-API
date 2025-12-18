@@ -1,12 +1,14 @@
 import "dotenv/config";
 import { authService } from "../services/authService.js";
+import { emailService } from "../services/emailService.ts";
 import { parseExpiryToMs } from "../utils/timeUtils.ts";
 import type { PrismaClient } from "@prisma/client";
 import type { Request, Response, NextFunction } from "express";
 
 // Missing features: account verification, password reset, multi-factor authentication.
 export function authController(prisma: PrismaClient) {
-  const service = authService(prisma);
+  const authenticationService = authService(prisma);
+  const emailServiceInstance = emailService(prisma);
 
   async function register(
     req: Request,
@@ -14,13 +16,14 @@ export function authController(prisma: PrismaClient) {
     next: NextFunction
   ): Promise<Response | void> {
     console.log("Handling registration request");
+
     const { firstName, lastName, email, password } = req.body as RegisterRequest;
 
     if (!firstName || !email || !password)
       return res.status(400).json({ message: "Required fields missing." });
 
     try {
-      const result = await service.register({ firstName, lastName, email, password });
+      const result = await authenticationService.register({ firstName, lastName, email, password });
 
       if (!result.ok) {
         return res
@@ -28,28 +31,41 @@ export function authController(prisma: PrismaClient) {
           .json({ message: "message" in result ? result.message : "Registration failed" });
       }
 
-      console.log("Registration successful for user:", result.data.email);
+      console.log("Registration successful for user:", result.user.email);
 
-      // When a user registeres, we create an account with a boolean 'verified' field set to false.
-      // We send an email using an email service with a link containing a unique token and store that token in the DB with an expiry time.
-      // When the user clicks the link in the email is fires off a get request to our API with the token.
-      // We verify the token is valid and not expired, then set the 'verified' field to true.
-      // first step: email service. We will create it in services/emailService.ts
-      return res.status(result.code).json({ user: result.data });
+      emailServiceInstance.sendVerificationEmail(email, result.activationToken).catch((err) => {
+        console.error("Error sending verification email:", err);
+      });
+
+      return res.status(result.code).json({ user: result.user });
     } catch (err) {
       console.error("Failed to register account", err);
       next(err instanceof Error ? err : new Error(String(err)));
     }
   }
 
-  async function ConfirmReistration(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> {
+  async function verify(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     console.log("Handling registration confirmation request");
-    const { token } = req.body;
+    const { token } = req.query;
+    if (!token || typeof token !== "string")
+      return res.status(400).json({ message: "Verification token missing or invalid" });
+
+    try {
+      const result = await authenticationService.verify({ token });
+      if (!result.ok) {
+        return res
+          .status(result.code)
+          .json({ message: "message" in result ? result.message : "Verification failed" });
+      }
+      console.log("Account verification successful for token:", token);
+
+      return res.status(result.code).json({ message: "Account verified successfully" });
+    } catch (err) {
+      console.error("Failed to verify account", err);
+      next(err instanceof Error ? err : new Error(String(err)));
+    }
   }
+
   async function login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     console.log("Handling login request");
     try {
@@ -59,7 +75,7 @@ export function authController(prisma: PrismaClient) {
       const ip = req.ip;
       const userAgent = req.get("User-Agent") ?? "";
 
-      const result = await service.login({ email, password, ip, userAgent });
+      const result = await authenticationService.login({ email, password, ip, userAgent });
 
       if (!result.ok)
         return res
@@ -97,7 +113,7 @@ export function authController(prisma: PrismaClient) {
     if (!rawRefresh) return res.status(401).json({ message: "No refresh token provided" });
 
     try {
-      const result = await service.refresh({ rawRefresh });
+      const result = await authenticationService.refresh({ rawRefresh });
 
       if (!result.ok)
         return res
@@ -137,7 +153,7 @@ export function authController(prisma: PrismaClient) {
     if (!rawRefresh) return res.status(400).json({ message: "No refresh token provided" });
 
     try {
-      const result = await service.logout({ rawRefresh });
+      const result = await authenticationService.logout({ rawRefresh });
       if (!result.ok)
         return res
           .status(result.code)
@@ -177,5 +193,5 @@ export function authController(prisma: PrismaClient) {
     ip?: string;
     userAgent?: string;
   }
-  return { register, login, refresh, logout };
+  return { register, verify, login, refresh, logout };
 }
