@@ -27,6 +27,7 @@
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^6.19.0",
     "@tsconfig/node-ts": "^23.6.2",
     "@tsconfig/node24": "^24.0.3",

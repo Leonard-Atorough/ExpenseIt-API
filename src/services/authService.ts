@@ -85,6 +85,7 @@ export function authService(prisma: PrismaClient) {
           activationToken: { select: { token: true } },
         },
       });
+
       return { ok: true, code: 201, user, activationToken: user.activationToken?.token };
     } catch (error) {
       return { ok: false, code: 500, message: "Failed to register user", internal: String(error) };
@@ -199,7 +200,7 @@ export function authService(prisma: PrismaClient) {
           ip: ip ?? "",
           userAgent: userAgent ?? "",
           createdAt: new Date(date),
-          expiresAt: new Date(date + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP)),
+          expiresAt: new Date(date + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d")),
         },
       });
 
@@ -236,7 +237,7 @@ export function authService(prisma: PrismaClient) {
   > {
     const { rawRefresh } = params;
     try {
-      const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET);
+      const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET || "") as JwtPayload;
 
       const { sub, rid } = payload as JwtPayloadWithRid;
 
@@ -265,7 +266,7 @@ export function authService(prisma: PrismaClient) {
         };
       }
       // issue new tokens - Move to a helper function later
-      const { token, refreshToken, refreshId } = IssueTokens(sub);
+      const { token, refreshToken, refreshId } = IssueTokens(sub as string);
 
       const date = Date.now();
       await prisma.$transaction([
@@ -276,7 +277,7 @@ export function authService(prisma: PrismaClient) {
             ip: tokenRecord.ip ?? "",
             userAgent: tokenRecord.userAgent ?? "",
             createdAt: new Date(date),
-            expiresAt: new Date(date + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP)),
+            expiresAt: new Date(date + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d")),
           },
         }),
         prisma.refreshToken.update({
@@ -299,7 +300,7 @@ export function authService(prisma: PrismaClient) {
     const { rawRefresh } = params;
 
     try {
-      const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET) as JwtPayload;
+      const payload = jwt.verify(rawRefresh, process.env.JWT_REFRESH_SECRET || "") as JwtPayload;
 
       if (!payload || !payload.rid) {
         return {
@@ -337,12 +338,12 @@ export function authService(prisma: PrismaClient) {
   } {
     const token = jwt.sign(
       { sub: String(userId), exp: parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") },
-      process.env.JWT_ACCESS_SECRET
+      process.env.JWT_ACCESS_SECRET || ""
     );
     const refreshId = crypto.randomUUID();
     const refreshToken = jwt.sign(
       { sub: userId, rid: refreshId, exp: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") },
-      process.env.JWT_REFRESH_SECRET
+      process.env.JWT_REFRESH_SECRET || ""
     );
     return { token, refreshToken, refreshId };
   }

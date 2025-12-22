@@ -30,11 +30,13 @@ export function authController(prisma: PrismaClient) {
           .json({ message: "message" in result ? result.message : "Registration failed" });
       }
 
-      console.log("Registration successful for user:", result.user.email);
+      if (result.activationToken) {
+        await emailServiceInstance.sendVerificationEmail(email, result.activationToken);
 
-      emailServiceInstance.sendVerificationEmail(email, result.activationToken).catch((err) => {
-        console.error("Error sending verification email:", err);
-      });
+        console.log("Verification email sent to:", email);
+      }
+
+      console.log("Registration successful for user:", result.user.email);
 
       return res.status(result.code).json({ user: result.user });
     } catch (err) {
