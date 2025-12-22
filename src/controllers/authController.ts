@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { authService } from "../services/authService.js";
 import { emailService } from "../services/emailService.ts";
 import { parseExpiryToMs } from "../utils/timeUtils.ts";

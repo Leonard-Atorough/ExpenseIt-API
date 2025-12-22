@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import "dotenv/config";
 import type { PrismaClient } from "@prisma/client";
 
 export function emailService(prisma: PrismaClient) {

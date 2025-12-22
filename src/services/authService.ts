@@ -2,7 +2,6 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { parseExpiryToMs } from "../utils/timeUtils.ts";
-import "dotenv/config";
 import type { PrismaClient } from "@prisma/client";
 
 interface JwtPayloadWithRid extends JwtPayload {
