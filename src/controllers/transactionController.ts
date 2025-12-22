@@ -24,7 +24,7 @@ export function transactionController(prisma: PrismaClient) {
       }
     } catch (error) {
       res.status(500).send("Oops! Something went wrong on our end. We'll look into it.");
-      next(new Error(error));
+      next(new Error(error instanceof Error ? error.message : String(error)));
     }
   }
 

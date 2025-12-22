@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRouter from "./src/routes/authRouter.js";
-import { initDb } from "./src/config/db.ts";
+import { createPrismaClient } from "./src/config/prisma.ts";
 import transactionRouter from "./src/routes/transactionRouter.js";
 import errorHandler from "./src/middleware/error.middleware.js";
 
@@ -11,7 +11,7 @@ dotenv.config();
 
 const app = express();
 
-const prisma = initDb();
+const prisma = createPrismaClient();
 
 // NOTE: Allowing all cross origin requests for now, need to consider restricting routes when on servers
 app.use(cors());
@@ -36,7 +36,4 @@ app.listen(PORT, async (error) => {
   if (error) throw error;
 
   console.log(`ExpenseIt API running on http://localhost:${PORT}/`);
-
-  const posts = await prisma.user.findMany();
-  console.log(posts);
 });
