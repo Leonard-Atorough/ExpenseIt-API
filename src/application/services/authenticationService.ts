@@ -129,6 +129,16 @@ export class AuthenticationService {
       throw new Error("Invalid refresh token");
     }
 
+    if (tokenRecord.userId !== sub) {
+      throw new Error("Invalid refresh token");
+    }
+
+    if (tokenRecord.expiresAt < now) {
+      throw new Error("Refresh token has expired");
+    }
+
+    await this.tokenRepository.revokeRefreshToken(rid);
+
     const newToken = await signJwt(
       {
         sub: String(sub),
