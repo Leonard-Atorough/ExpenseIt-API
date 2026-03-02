@@ -97,10 +97,9 @@ export class AuthenticationController {
 
       await this.authenticationService.logout({ rawRefresh });
 
-      const response: ApiResponse<null> = {
+      const response: ApiResponse<void> = {
         ok: true,
         code: 200,
-        data: null,
       };
       res.clearCookie("refreshToken", REFRESH_TOKEN_COOKIE_OPTIONS);
       res.status(200).json(response);

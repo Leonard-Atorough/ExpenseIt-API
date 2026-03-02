@@ -20,7 +20,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization", "User-Agent", "X-Forwarded-For"],
   }),
 );
-app.use(express.json());
+app.use(express.json({ strict: false }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRouter(prisma));
