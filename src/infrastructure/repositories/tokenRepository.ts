@@ -17,7 +17,7 @@ export class TokenRepository implements ITokenRepository {
     userAgent?: string,
   ): Promise<void> {
     await this.client.refreshToken.upsert({
-      where: { id: refreshTokenId },
+      where: { userId },
       create: {
         id: refreshTokenId,
         userId,
@@ -28,6 +28,7 @@ export class TokenRepository implements ITokenRepository {
         revokedAt: null,
       },
       update: {
+        id: refreshTokenId,
         expiresAt,
         ip: ip ?? null,
         userAgent: userAgent ?? null,

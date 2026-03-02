@@ -1,4 +1,3 @@
-import { sign } from "crypto";
 import { vi } from "vitest";
 
 // Set required environment variables for tests

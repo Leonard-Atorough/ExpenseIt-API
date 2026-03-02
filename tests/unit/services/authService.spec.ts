@@ -182,6 +182,7 @@ describe("AuthenticationService", () => {
       expect(mockTokenRepository.findTokenRecordById).toHaveBeenCalledWith(
         "refresh-token-id-valid",
       );
+      expect(mockTokenRepository.revokeRefreshToken).toHaveBeenCalledWith("refresh-token-id-valid");
       expect(mockTokenRepository.saveRefreshToken).toHaveBeenCalled();
     });
 
@@ -210,6 +211,30 @@ describe("AuthenticationService", () => {
 
       await expect(authService.refresh({ rawRefresh: "revoked-token" })).rejects.toThrow(
         "Invalid refresh token",
+      );
+    });
+
+    it("should fail to refresh when token userId does not match JWT sub", async () => {
+      const mismatchedRecord = {
+        ...mockTokenRecord,
+        userId: "different-user-id",
+      };
+      (mockTokenRepository.findTokenRecordById as any).mockResolvedValue(mismatchedRecord);
+
+      await expect(authService.refresh({ rawRefresh: "valid-refresh-token" })).rejects.toThrow(
+        "Invalid refresh token",
+      );
+    });
+
+    it("should fail to refresh when token record is expired", async () => {
+      const expiredRecord = {
+        ...mockTokenRecord,
+        expiresAt: new Date(Date.now() - 1000 * 60 * 60), // expired 1 hour ago
+      };
+      (mockTokenRepository.findTokenRecordById as any).mockResolvedValue(expiredRecord);
+
+      await expect(authService.refresh({ rawRefresh: "valid-refresh-token" })).rejects.toThrow(
+        "Refresh token has expired",
       );
     });
 
