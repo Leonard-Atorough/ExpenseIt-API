@@ -113,7 +113,7 @@ export class AuthenticationService {
   }): Promise<{ token: RefreshTokenResponseDto; refreshToken: string }> {
     const { rawRefresh } = params;
 
-    const payload = verifyJwt(rawRefresh, this.jwtRefreshSecret);
+    const payload = await verifyJwt(rawRefresh, this.jwtRefreshSecret);
 
     const now = new Date();
 
@@ -163,7 +163,7 @@ export class AuthenticationService {
 
   async logout(params: { rawRefresh: string }): Promise<void> {
     const { rawRefresh } = params;
-    const payload = verifyJwt(rawRefresh, this.jwtRefreshSecret);
+    const payload = await verifyJwt(rawRefresh, this.jwtRefreshSecret);
 
     if (!payload || typeof payload === "string" || !("rid" in payload)) {
       throw new Error("Invalid refresh token");
