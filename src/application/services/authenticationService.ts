@@ -16,6 +16,12 @@ interface JwtPayloadWithRid extends JwtPayload {
 }
 
 export class AuthenticationService {
+  private readonly CONVERT_TO_SECONDS = 1000;
+  private readonly TOKEN_EXPIRY_SECONDS =
+    parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") / this.CONVERT_TO_SECONDS;
+  private readonly REFRESH_EXPIRY_SECONDS =
+    parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") / this.CONVERT_TO_SECONDS;
+
   private userRepository: IUserRepository;
   private tokenRepository: ITokenRepository;
   private jwtAccessSecret: string;
@@ -54,7 +60,10 @@ export class AuthenticationService {
     return AuthenticationMapper.toDto(createdUser);
   }
 
-  async login(email: string, password: string): Promise<AuthResponseDto> {
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ authUser: AuthResponseDto; refreshToken: string }> {
     const user = await this.userRepository.getByEmail(email);
 
     if (!user) {
@@ -66,8 +75,13 @@ export class AuthenticationService {
       throw new Error("Invalid email or password");
     }
 
+    const now = new Date();
+
     const token = await signJwt(
-      { sub: String(user.id), exp: parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") / 1000 },
+      {
+        sub: String(user.id),
+        exp: Math.floor(now.getTime() / this.CONVERT_TO_SECONDS) + this.TOKEN_EXPIRY_SECONDS,
+      },
       this.jwtAccessSecret,
     );
 
@@ -76,31 +90,32 @@ export class AuthenticationService {
       {
         sub: String(user.id),
         rid: refreshId,
-        exp: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") / 1000,
+        exp: Math.floor(now.getTime() / this.CONVERT_TO_SECONDS) + this.REFRESH_EXPIRY_SECONDS,
       },
       this.jwtRefreshSecret,
     );
-
-    const now = new Date();
 
     await this.tokenRepository.saveRefreshToken(
       String(user.id),
       refreshId,
       new Date(now.getTime()),
-      new Date(now.getTime() + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d")),
+      new Date(now.getTime() + this.REFRESH_EXPIRY_SECONDS * this.CONVERT_TO_SECONDS),
     );
 
     return {
-      user: AuthenticationMapper.toDto(user),
-      token,
+      authUser: { ...AuthenticationMapper.toDto(user), token } as AuthResponseDto,
       refreshToken,
     };
   }
 
-  async refresh(params: { rawRefresh: string }): Promise<RefreshTokenResponseDto> {
+  async refresh(params: {
+    rawRefresh: string;
+  }): Promise<{ token: RefreshTokenResponseDto; refreshToken: string }> {
     const { rawRefresh } = params;
 
     const payload = verifyJwt(rawRefresh, this.jwtRefreshSecret);
+
+    const now = new Date();
 
     if (!payload || typeof payload === "string" || !("rid" in payload)) {
       throw new Error("Invalid refresh token");
@@ -115,31 +130,33 @@ export class AuthenticationService {
     }
 
     const newToken = await signJwt(
-      { sub: String(sub), exp: parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") / 1000 },
+      {
+        sub: String(sub),
+        exp: Math.floor(now.getTime() / this.CONVERT_TO_SECONDS) + this.TOKEN_EXPIRY_SECONDS,
+      },
       this.jwtAccessSecret,
     );
 
     const newRefreshId = crypto.randomUUID();
+
     const newRefreshToken = await signJwt(
       {
         sub: String(sub),
         rid: newRefreshId,
-        exp: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") / 1000,
+        exp: Math.floor(now.getTime() / this.CONVERT_TO_SECONDS) + this.REFRESH_EXPIRY_SECONDS,
       },
       this.jwtRefreshSecret,
     );
-
-    const now = new Date();
 
     await this.tokenRepository.saveRefreshToken(
       String(sub),
       newRefreshId,
       now,
-      new Date(now.getTime() + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d")),
+      new Date(now.getTime() + this.REFRESH_EXPIRY_SECONDS * this.CONVERT_TO_SECONDS),
     );
 
     return {
-      token: newToken,
+      token: { token: newToken } as RefreshTokenResponseDto,
       refreshToken: newRefreshToken,
     };
   }

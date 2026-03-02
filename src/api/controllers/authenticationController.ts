@@ -8,6 +8,7 @@ import type {
 } from "src/application/dtos";
 import type { AuthenticationService } from "src/application/services";
 import type { NextFunction, Request, Response } from "express";
+import { REFRESH_TOKEN_COOKIE_OPTIONS } from "../config";
 
 export class AuthenticationController {
   private authenticationService: AuthenticationService;
@@ -61,9 +62,10 @@ export class AuthenticationController {
       const response: ApiResponse<AuthResponseDto> = {
         ok: true,
         code: 200,
-        data: authResult,
+        data: authResult.authUser,
       };
 
+      res.cookie("refreshToken", authResult.refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
       res.status(200).json(response);
     } catch (err) {
       next(err instanceof Error ? err : new Error(String(err)));
@@ -79,8 +81,10 @@ export class AuthenticationController {
       const response: ApiResponse<RefreshTokenResponseDto> = {
         ok: true,
         code: 200,
-        data: refreshResult,
+        data: refreshResult.token,
       };
+      res.cookie("refreshToken", refreshResult.refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
+
       res.status(200).json(response);
     } catch (err) {
       next(err instanceof Error ? err : new Error(String(err)));
@@ -98,6 +102,7 @@ export class AuthenticationController {
         code: 200,
         data: null,
       };
+      res.clearCookie("refreshToken", REFRESH_TOKEN_COOKIE_OPTIONS);
       res.status(200).json(response);
     } catch (err) {
       next(err instanceof Error ? err : new Error(String(err)));

@@ -7,15 +7,12 @@ export interface UserResponseDto {
   profileName?: string;
 }
 
-export interface AuthResponseDto {
-  user: UserResponseDto;
+export interface AuthResponseDto extends UserResponseDto {
   token: string;
-  refreshToken: string;
 }
 
 export type UpdateUserResponseDto = UserResponseDto;
 
-export interface RefreshTokenResponseDto {
+export interface tokenResponseDto {
   token: string;
-  refreshToken: string;
 }
