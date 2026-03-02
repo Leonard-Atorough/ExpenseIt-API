@@ -61,7 +61,7 @@ export class TransactionService {
       throw new Error("Transaction not found");
     }
 
-    const updatedTransaction = existingTransaction.update({
+    existingTransaction.update({
       amount: transaction.amount,
       type: transaction.type as "Income" | "Expense",
       category: existingTransaction.convertStingToCategory(transaction.category),
@@ -69,9 +69,9 @@ export class TransactionService {
       date: transaction.transactionDate,
     });
 
-    const transactionToSave = TransactionMapper.toDomain(updatedTransaction);
-
-    const savedTransaction = await this.transactionRepository.update(transactionToSave);
+    const savedTransaction = await this.transactionRepository.update(
+      TransactionMapper.toDomain(existingTransaction),
+    );
 
     if (!savedTransaction) {
       throw new Error("Failed to update transaction");
