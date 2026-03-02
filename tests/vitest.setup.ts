@@ -1,5 +1,7 @@
-import { sign } from "crypto";
 import { vi } from "vitest";
+
+process.env.JWT_ACCESS_SECRET = "test-access-secret";
+process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
 
 vi.mock("bcrypt", () => ({
   default: {
