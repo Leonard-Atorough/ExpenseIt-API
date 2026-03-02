@@ -88,7 +88,7 @@ describe("AuthenticationService", () => {
       });
 
       const savedUser = (mockUserRepository.save as any).mock.calls[0][0];
-      expect(savedUser.account.hashPassword).toHaveBeenCalled();
+      expect(savedUser.account.isHashed).toBe(true);
     });
 
     it("should handle errors during registration", async () => {
@@ -167,7 +167,7 @@ describe("AuthenticationService", () => {
     };
 
     beforeEach(() => {
-      (verifyJwt as any).mockReturnValue(mockValidToken);
+      (verifyJwt as any).mockResolvedValue(mockValidToken);
       (mockTokenRepository.findTokenRecordById as any).mockResolvedValue(mockTokenRecord);
       (mockTokenRepository.saveRefreshToken as any).mockResolvedValue(undefined);
     });
@@ -176,7 +176,7 @@ describe("AuthenticationService", () => {
       const response = await authService.refresh({ rawRefresh: "valid-refresh-token" });
 
       expect(response).toBeDefined();
-      expect(response.token).toEqual({ token: "mocked-jwt-token" });
+      expect(response.token.token).toBe("mocked-jwt-token");
       expect(response.refreshToken).toBe("mocked-jwt-token");
       expect(verifyJwt).toHaveBeenCalledWith("valid-refresh-token", process.env.JWT_REFRESH_SECRET);
       expect(mockTokenRepository.findTokenRecordById).toHaveBeenCalledWith(
@@ -187,7 +187,7 @@ describe("AuthenticationService", () => {
     });
 
     it("should fail to refresh with invalid token payload", async () => {
-      (verifyJwt as any).mockReturnValue(null);
+      (verifyJwt as any).mockResolvedValue(null);
 
       await expect(authService.refresh({ rawRefresh: "invalid-token" })).rejects.toThrow(
         "Invalid refresh token",
@@ -255,7 +255,7 @@ describe("AuthenticationService", () => {
     };
 
     beforeEach(() => {
-      (verifyJwt as any).mockReturnValue(mockPayload);
+      (verifyJwt as any).mockResolvedValue(mockPayload);
       (mockTokenRepository.revokeRefreshToken as any).mockResolvedValue(undefined);
     });
 
@@ -267,7 +267,7 @@ describe("AuthenticationService", () => {
     });
 
     it("should fail to logout with invalid refresh token", async () => {
-      (verifyJwt as any).mockReturnValue(null);
+      (verifyJwt as any).mockResolvedValue(null);
 
       await expect(authService.logout({ rawRefresh: "invalid-token" })).rejects.toThrow(
         "Invalid refresh token",
@@ -275,7 +275,7 @@ describe("AuthenticationService", () => {
     });
 
     it("should fail to logout when payload has no rid", async () => {
-      (verifyJwt as any).mockReturnValue({ sub: "user-id-123" }); // Missing rid
+      (verifyJwt as any).mockResolvedValue({ sub: "user-id-123" }); // Missing rid
 
       await expect(authService.logout({ rawRefresh: "invalid-token" })).rejects.toThrow(
         "Invalid refresh token",
