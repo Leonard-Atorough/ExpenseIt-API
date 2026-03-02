@@ -1,5 +1,5 @@
 import BaseEntity from "../baseEntity";
-import type { Category } from "./category";
+import { Category } from "./category";
 import type { TransactionType } from "./transactionType";
 
 export default class Transaction extends BaseEntity {
@@ -93,7 +93,7 @@ export default class Transaction extends BaseEntity {
     this.updatedAt = new Date();
   }
 
-  convertStingToCategory(category: string): Category {
-    return category as unknown as Category;
+  convertStringToCategory(category: string): Category {
+    return new Category(category);
   }
 }

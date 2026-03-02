@@ -65,7 +65,7 @@ export class TransactionService {
     existingTransaction.update({
       amount: transaction.amount,
       type: transaction.type as TransactionType,
-      category: existingTransaction.convertStingToCategory(transaction.category),
+      category: existingTransaction.convertStringToCategory(transaction.category),
       description: transaction.description,
       date: transaction.transactionDate,
     });
