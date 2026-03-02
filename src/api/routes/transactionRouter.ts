@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { TransactionController } from "../controllers";
-import { authenticationHandler } from "../middleware/auth.middleware.js";
+import { authenticationHandler } from "../middleware";
 import type { PrismaClient } from "@prisma/client";
+import { TransactionService } from "@src/application/services";
+import { TransactionRepository } from "@src/infrastructure/repositories";
 
 export default function transactionRouter(prisma: PrismaClient) {
   const transactionRouter = Router();
 
-  const transactionController = new TransactionController(prisma);
+  const transactionController = new TransactionController(new TransactionService(new TransactionRepository(prisma)));
 
   transactionRouter.get(
     "/",
