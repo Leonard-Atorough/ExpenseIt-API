@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "../../../src/utils/jwtUtils";
+import "../../../src/api/utils/jwtUtils";
 
 describe("JWT Utils", () => {
   it.todo("should generate valid JWT token");
