@@ -15,6 +15,21 @@ export class AuthenticationController {
     this.authenticationService = authenticationService;
   }
 
+  async GetCurrentUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const userId = req.user?.sub;
+    try {
+      const user = await this.authenticationService.getCurrentUser(userId);
+      const response: ApiResponse<UserResponseDto> = {
+        ok: true,
+        code: 200,
+        data: user,
+      };
+      res.status(200).json(response);
+    } catch (err) {
+      next(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
   async Register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = req.body as unknown as CreateUserDto;

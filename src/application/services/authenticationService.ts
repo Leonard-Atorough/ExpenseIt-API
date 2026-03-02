@@ -30,6 +30,20 @@ export class AuthenticationService {
     this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
   }
 
+  async getCurrentUser(userId: string | undefined): Promise<UserResponseDto> {
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await this.userRepository.getById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return AuthenticationMapper.toDto(user);
+  }
+
   async register(user: CreateUserDto): Promise<UserResponseDto> {
     const newUser: User = AuthenticationMapper.toDomain(user);
 
@@ -70,7 +84,7 @@ export class AuthenticationService {
     const now = new Date();
 
     await this.tokenRepository.saveRefreshToken(
-      user.id!,
+      String(user.id),
       refreshId,
       new Date(now.getTime()),
       new Date(now.getTime() + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d")),

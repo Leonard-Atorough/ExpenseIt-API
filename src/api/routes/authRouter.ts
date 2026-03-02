@@ -3,6 +3,7 @@ import { AuthenticationController } from "../controllers";
 import type { PrismaClient } from "@prisma/client";
 import { AuthenticationService } from "@src/application/services/authenticationService";
 import { TokenRepository, UserRepository } from "@src/infrastructure/repositories";
+import { authenticationHandler } from "../middleware/auth.middleware";
 
 export default function authRouter(prisma: PrismaClient) {
   const authRouter = Router();
@@ -14,6 +15,8 @@ export default function authRouter(prisma: PrismaClient) {
   authRouter.get("/", (req, res) => {
     res.status(200).json({ message: "Auth route is working" });
   });
+
+  authRouter.get("/me", authenticationHandler, authenticationController.GetCurrentUser.bind(authenticationController));
 
   authRouter.post("/register", authenticationController.Register.bind(authenticationController));
 
