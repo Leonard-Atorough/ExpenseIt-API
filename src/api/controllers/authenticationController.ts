@@ -3,7 +3,7 @@ import type {
   AuthResponseDto,
   CreateUserDto,
   LoginUserDto,
-  RefreshTokenResponseDto,
+  TokenResponseDto,
   UserResponseDto,
 } from "src/application/dtos";
 import type { AuthenticationService } from "src/application/services";
@@ -78,7 +78,7 @@ export class AuthenticationController {
 
       const refreshResult = await this.authenticationService.refresh({ rawRefresh });
 
-      const response: ApiResponse<RefreshTokenResponseDto> = {
+      const response: ApiResponse<TokenResponseDto> = {
         ok: true,
         code: 200,
         data: refreshResult.token,

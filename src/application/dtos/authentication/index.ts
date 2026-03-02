@@ -3,5 +3,5 @@ export type {
   UserResponseDto,
   AuthResponseDto,
   UpdateUserResponseDto,
-  tokenResponseDto as RefreshTokenResponseDto,
+  TokenResponseDto,
 } from "./response";

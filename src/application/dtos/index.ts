@@ -4,7 +4,7 @@ export type {
   UserResponseDto,
   AuthResponseDto,
   UpdateUserResponseDto,
-  RefreshTokenResponseDto,
+  TokenResponseDto,
 } from "./authentication";
 export type { CreateTransactionDto, UpdateTransactionDto } from "./transaction";
 export type { TransactionResponseDto, UpdateTransactionResponseDto } from "./transaction";

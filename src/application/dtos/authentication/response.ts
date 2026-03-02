@@ -13,6 +13,6 @@ export interface AuthResponseDto extends UserResponseDto {
 
 export type UpdateUserResponseDto = UserResponseDto;
 
-export interface tokenResponseDto {
+export interface TokenResponseDto {
   token: string;
 }
