@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "../../../src/middleware/auth.middleware";
+import "../../../src/api/middleware/auth.middleware";
 
 describe("Auth Middleware", () => {
   it.todo("should verify valid JWT token");
