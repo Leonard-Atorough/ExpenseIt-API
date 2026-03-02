@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "@src/controllers/transactionController";
+import "../../../src/controllers/transactionController";
 
 describe("Transaction Controller", () => {
   it.todo("should create a new transaction");

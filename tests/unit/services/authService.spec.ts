@@ -1,15 +1,15 @@
 import { vi, describe, beforeEach, expect, it } from "vitest";
-import { AuthenticationService } from "@src/application/services";
-import type { ITokenRepository, IUserRepository } from "@src/core/interfaces";
-import type { User } from "@src/core/entities";
+import { AuthenticationService } from "../../../src/application/services";
+import type { ITokenRepository, IUserRepository } from "../../../src/core/interfaces";
+import type { User } from "../../../src/core/entities";
 
 // Mock the JWT utilities
-vi.mock("@src/api/utils/jwtUtils", () => ({
+vi.mock("../../../src/api/utils/jwtUtils", () => ({
   signJwt: vi.fn().mockResolvedValue("mocked-jwt-token"),
   verifyJwt: vi.fn(),
 }));
 
-vi.mock("@src/api/utils/timeUtils", () => ({
+vi.mock("../../../src/api/utils/timeUtils", () => ({
   parseExpiryToMs: vi.fn().mockReturnValue(900000), // 15 minutes in ms
 }));
 
@@ -19,7 +19,7 @@ global.crypto.randomUUID = vi.fn(
     "12345678-1234-5678-1234-567812345678" as `${string}-${string}-${string}-${string}-${string}`,
 );
 
-import { signJwt, verifyJwt } from "@src/api/utils/jwtUtils";
+import { signJwt, verifyJwt } from "../../../src/api/utils/jwtUtils";
 
 const mockUser: User = {
   id: "user-id-123",

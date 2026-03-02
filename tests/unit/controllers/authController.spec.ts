@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import "@src/controllers/authController";
+import "../../../src/controllers/authController";
 
 describe("Auth Controller", () => {
   describe("register", () => {

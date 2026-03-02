@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "@src/routes/authRouter";
+import "../../../src/routes/authRouter";
 
 describe("Auth Routes", () => {
   it.todo("should have POST /register endpoint");

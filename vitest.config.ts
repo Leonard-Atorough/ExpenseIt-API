@@ -1,13 +1,10 @@
 import { defineConfig } from "vitest/config";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import path from "path";
 
 export default defineConfig({
   resolve: {
     alias: {
-      "@src": `${__dirname}/src`,
+      "@src": path.resolve(__dirname, "./src"),
     },
   },
   test: {
@@ -17,7 +14,6 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      all: true,
       exclude: ["node_modules/", "tests/", "dist/", "generated/"],
     },
     // tests aren't in source but root folder

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "@src/utils/timeUtils";
+import "../../../src/utils/timeUtils";
 
 describe("Time Utils", () => {
   describe("parseExpiryToMs", () => {

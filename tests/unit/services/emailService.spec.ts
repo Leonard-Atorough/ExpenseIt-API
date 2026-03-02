@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import "@src/services/emailService";
+import "../../../src/services/emailService";
 
 describe("Email Service", () => {
   describe("sendVerificationEmail", () => {
