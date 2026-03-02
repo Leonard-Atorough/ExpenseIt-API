@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { userController } from "../controllers/userController.ts";
+import { userController } from "../../controllers/userController.ts";
 import { authenticationHandler } from "../middleware/auth.middleware.ts";
 import type { PrismaClient } from "@prisma/client";
 

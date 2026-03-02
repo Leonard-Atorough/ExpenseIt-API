@@ -18,9 +18,16 @@ interface JwtPayloadWithRid extends JwtPayload {
 export class AuthenticationService {
   private userRepository: IUserRepository;
   private tokenRepository: ITokenRepository;
+  private jwtAccessSecret: string;
+  private jwtRefreshSecret: string;
   constructor(userRepository: IUserRepository, tokenRepository: ITokenRepository) {
     this.userRepository = userRepository;
     this.tokenRepository = tokenRepository;
+    if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
+      throw new Error("JWT secrets are not defined in environment variables");
+    }
+    this.jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
+    this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
   }
 
   async register(user: CreateUserDto): Promise<UserResponseDto> {
@@ -47,7 +54,7 @@ export class AuthenticationService {
 
     const token = await signJwt(
       { sub: String(user.id), exp: parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") / 1000 },
-      process.env.JWT_ACCESS_SECRET,
+      this.jwtAccessSecret,
     );
 
     const refreshId = crypto.randomUUID();
@@ -57,13 +64,13 @@ export class AuthenticationService {
         rid: refreshId,
         exp: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") / 1000,
       },
-      process.env.JWT_REFRESH_SECRET,
+      this.jwtRefreshSecret,
     );
 
     const now = new Date();
 
     await this.tokenRepository.saveRefreshToken(
-      user.id,
+      user.id!,
       refreshId,
       new Date(now.getTime()),
       new Date(now.getTime() + parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d")),
@@ -79,7 +86,7 @@ export class AuthenticationService {
   async refresh(params: { rawRefresh: string }): Promise<RefreshTokenResponseDto> {
     const { rawRefresh } = params;
 
-    const payload = verifyJwt(rawRefresh, process.env.JWT_REFRESH_SECRET);
+    const payload = verifyJwt(rawRefresh, this.jwtRefreshSecret);
 
     if (!payload || typeof payload === "string" || !("rid" in payload)) {
       throw new Error("Invalid refresh token");
@@ -95,7 +102,7 @@ export class AuthenticationService {
 
     const newToken = await signJwt(
       { sub: String(sub), exp: parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") / 1000 },
-      process.env.JWT_ACCESS_SECRET,
+      this.jwtAccessSecret,
     );
 
     const newRefreshId = crypto.randomUUID();
@@ -105,7 +112,7 @@ export class AuthenticationService {
         rid: newRefreshId,
         exp: parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") / 1000,
       },
-      process.env.JWT_REFRESH_SECRET,
+      this.jwtRefreshSecret,
     );
 
     const now = new Date();
@@ -125,7 +132,7 @@ export class AuthenticationService {
 
   async logout(params: { rawRefresh: string }): Promise<void> {
     const { rawRefresh } = params;
-    const payload = verifyJwt(rawRefresh, process.env.JWT_REFRESH_SECRET);
+    const payload = verifyJwt(rawRefresh, this.jwtRefreshSecret);
 
     if (!payload || typeof payload === "string" || !("rid" in payload)) {
       throw new Error("Invalid refresh token");

@@ -20,7 +20,13 @@ export async function authenticationHandler(req: Request, res: Response, next: N
     }
     const token = parts[1];
 
-    const payload = await verifyJwt(token, process.env.JWT_ACCESS_SECRET);
+    const jwtSecret = process.env.JWT_ACCESS_SECRET;
+
+    if (!jwtSecret) {
+      console.error("JWT_ACCESS_SECRET is not defined in environment variables");
+      return res.status(500).json({ error: "Internal Server Error: JWT secret not configured" });
+    }
+    const payload = await verifyJwt(token, jwtSecret);
 
     if (typeof payload !== "object" || !payload.sub) {
       return res.status(401).json({ error: "Unauthorized: Invalid token payload" });

@@ -22,6 +22,12 @@ export default class Transaction extends BaseEntity {
     updatedAt?: Date,
   ) {
     super(id, createdAt, updatedAt);
+    this.userId = userId;
+    this.amount = amount;
+    this.type = type;
+    this.category = category;
+    this.description = description;
+    this.date = transactionDate;
   }
 
   static create(params: {

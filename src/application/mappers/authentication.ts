@@ -43,7 +43,7 @@ export class AuthenticationMapper {
 
   public static toDto(domain: User): UserResponseDto {
     return {
-      id: domain.id,
+      id: domain.id!,
       email: domain.email,
       firstName: domain.firstName,
       lastName: domain.lastName,

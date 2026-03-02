@@ -20,6 +20,12 @@ export default class User extends BaseEntity {
     updatedAt?: Date,
   ) {
     super(id, createdAt, updatedAt);
+    this.email = email;
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.profilePicture = profilePicture;
+    this.profileName = profileName;
+    this.account = account;
   }
 
   static create(params: {

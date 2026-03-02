@@ -21,13 +21,10 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization", "User-Agent", "X-Forwarded-For"],
   }),
 );
-
 app.use(express.json());
-
 app.use(cookieParser());
 
 app.use("/api/auth", authRouter(prisma));
-
 app.use("/api/transactions", transactionRouter(prisma));
 
 app.get("/ping", (_req, res) => {
@@ -43,6 +40,6 @@ app.listen(PORT, async (error) => {
 
   console.log(`ExpenseIt API running on http://localhost:${PORT}/`);
 
-  const posts = await prisma.user.findMany();
-  console.log(posts);
+  const users = await prisma.user.findMany();
+  console.log(users);
 });

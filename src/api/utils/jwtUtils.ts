@@ -13,7 +13,7 @@ export async function signJwt(
   options?: jwt.SignOptions
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    jwt.sign(payload, secret, options, (err, token) => {
+    jwt.sign(payload, secret, options || {}, (err, token) => {
       if (err || !token) {
         return reject(err);
       }
