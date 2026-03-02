@@ -9,7 +9,7 @@ export class TransactionMapper {
       type: raw.type,
       category: raw.category,
       description: raw.description,
-      date: raw.date,
+      date: raw.transactionDate,
     });
   }
 
