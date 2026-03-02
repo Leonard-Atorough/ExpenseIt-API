@@ -37,9 +37,5 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, async (error) => {
   if (error) throw error;
-
   console.log(`ExpenseIt API running on http://localhost:${PORT}/`);
-
-  const users = await prisma.user.findMany();
-  console.log(users);
 });

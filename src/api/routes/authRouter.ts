@@ -1,11 +1,15 @@
 import { Router } from "express";
 import { AuthenticationController } from "../controllers";
 import type { PrismaClient } from "@prisma/client";
+import { AuthenticationService } from "@src/application/services/authenticationService";
+import { TokenRepository, UserRepository } from "@src/infrastructure/repositories";
 
 export default function authRouter(prisma: PrismaClient) {
   const authRouter = Router();
 
-  const authenticationController = new AuthenticationController(prisma);
+  const authenticationController = new AuthenticationController(
+    new AuthenticationService(new UserRepository(prisma), new TokenRepository(prisma)),
+  );
 
   authRouter.get("/", (req, res) => {
     res.status(200).json({ message: "Auth route is working" });
