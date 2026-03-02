@@ -1,12 +1,13 @@
+import dotenv from "dotenv";
+
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import errorHandler from "src/api/middleware/error.middleware";
 import { authRouter, transactionRouter } from "src/api/routes";
 import { createPrismaClient } from "src/infrastructure/config/prisma";
-
-dotenv.config();
 
 const app = express();
 

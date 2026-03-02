@@ -1,52 +1,76 @@
 import type { PrismaClient } from "@prisma/client";
 import type { User } from "src/core/entities";
 import type { IUserRepository } from "src/core/interfaces";
+import { AuthenticationMapper } from "src/application/mappers/authentication";
 
 export class UserRepository implements IUserRepository {
   client: PrismaClient;
   constructor(client: PrismaClient) {
     this.client = client;
   }
-  getById(id: string): Promise<User | null> {
-    throw new Error("Method not implemented.");
+
+  async getById(id: string): Promise<User | null> {
+    const rawUser = await this.client.user.findUnique({
+      where: { id },
+      include: { account: true },
+    });
+
+    if (!rawUser) return null;
+
+    return AuthenticationMapper.toDomainFromPersistence(rawUser);
   }
-  getByEmail(email: string): Promise<User | null> {
-    return this.client.user.findUnique({
+
+  async getByEmail(email: string): Promise<User | null> {
+    const rawUser = await this.client.user.findUnique({
       where: { email },
       include: { account: true },
     });
+
+    if (!rawUser) return null;
+
+    return AuthenticationMapper.toDomainFromPersistence(rawUser);
   }
-  save(user: User): Promise<User> {
-    const { id, firstName, lastName, email, profileName, profilePicture } = user;
+
+  async save(user: User): Promise<User> {
+    const { id, firstName, lastName, email } = user;
     const password = user.account?.getHashedPassword();
 
-    // Handle optional fields by converting undefined to null for Prisma compatibility.
-    const lastNameOrNull = lastName ?? null;
-    const profileNameOrNull = profileName ?? null;
-    const profilePictureOrNull = profilePicture ?? null;
+    if (id) {
+      const existingUser = await this.client.user.findUnique({
+        where: { id },
+      });
 
-    return this.client.user.upsert({
-      where: { id },
-      update: {
+      if (existingUser) {
+        const updatedUser = await this.client.user.update({
+          where: { id },
+          data: {
+            firstName,
+            email,
+            ...(lastName && { lastName }),
+          },
+          include: { account: true },
+        });
+
+        return AuthenticationMapper.toDomainFromPersistence(updatedUser);
+      }
+    }
+
+    const newUser = await this.client.user.create({
+      data: {
         firstName,
-        lastName: lastNameOrNull,
         email,
-        profileName: profileNameOrNull,
-        profilePicture: profilePictureOrNull,
+        ...(lastName && { lastName }),
+        account: password ? { create: { password } } : undefined,
       },
-      create: {
-        id,
-        firstName,
-        lastName: lastNameOrNull,
-        email,
-        profileName: profileNameOrNull,
-        profilePicture: profilePictureOrNull,
-        account: { create: { password } },
-      },
-      select: { id: true, firstName: true, lastName: true, email: true },
+      include: { account: true },
     });
+
+    return AuthenticationMapper.toDomainFromPersistence(newUser);
   }
-  delete(id: string): Promise<void> {
-    throw new Error("Method not implemented.");
+
+  async delete(id: string): Promise<void> {
+    await this.client.user.delete({
+      where: { id },
+    });
   }
 }

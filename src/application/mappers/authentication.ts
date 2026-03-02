@@ -21,7 +21,7 @@ export class AuthenticationMapper {
       lastName: raw.lastName,
       profilePicture: raw.profilePicture,
       profileName: raw.profileName,
-      account: new Account(raw.password),
+      account: new Account(raw.account?.password || "", true),
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     });

@@ -5,8 +5,9 @@ export class Account {
   isHashed: boolean = false;
 
   private readonly SALT_ROUNDS = 12;
-  constructor(password: string) {
+  constructor(password: string, isHashed: boolean = false) {
     this.#password = password;
+    this.isHashed = isHashed;
   }
 
   /**
