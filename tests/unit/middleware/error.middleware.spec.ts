@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "@src/middleware/error.middleware";
+import "../../../src/middleware/error.middleware";
 
 describe("Error Middleware", () => {
   it.todo("should catch and handle errors");

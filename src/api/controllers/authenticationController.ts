@@ -1,0 +1,111 @@
+import type {
+  ApiResponse,
+  AuthResponseDto,
+  CreateUserDto,
+  LoginUserDto,
+  TokenResponseDto,
+  UserResponseDto,
+} from "src/application/dtos";
+import type { AuthenticationService } from "src/application/services";
+import type { NextFunction, Request, Response } from "express";
+import { REFRESH_TOKEN_COOKIE_OPTIONS } from "../config";
+
+export class AuthenticationController {
+  private authenticationService: AuthenticationService;
+  constructor(authenticationService: AuthenticationService) {
+    this.authenticationService = authenticationService;
+  }
+
+  async GetCurrentUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const userId = req.user?.sub;
+    try {
+      const user = await this.authenticationService.getCurrentUser(userId);
+      const response: ApiResponse<UserResponseDto> = {
+        ok: true,
+        code: 200,
+        data: user,
+      };
+      res.status(200).json(response);
+    } catch (err) {
+      next(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  async Register(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = req.body as unknown as CreateUserDto;
+
+      const newUser = await this.authenticationService.register(user);
+
+      const response: ApiResponse<UserResponseDto> = {
+        ok: true,
+        code: 201,
+        data: newUser,
+      };
+      res.status(201).json(response);
+    } catch (err) {
+      // handle localized errors here (errors of type AppError with known codes)
+      // for unexpected errors, pass on to global error handler
+      next(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  async Login(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email, password } = req.body as unknown as LoginUserDto;
+
+      // In a future enhancement, we could log the IP address and user agent for security monitoring and anomaly detection.
+      const ip = req.ip;
+      const userAgent = req.get("User-Agent") ?? "";
+
+      const authResult = await this.authenticationService.login(email, password);
+      const response: ApiResponse<AuthResponseDto> = {
+        ok: true,
+        code: 200,
+        data: authResult.authUser,
+      };
+
+      res.cookie("refreshToken", authResult.refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
+      res.status(200).json(response);
+    } catch (err) {
+      next(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  async Refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const rawRefresh = req.cookies.refreshToken as string;
+
+      const refreshResult = await this.authenticationService.refresh({ rawRefresh });
+
+      const response: ApiResponse<TokenResponseDto> = {
+        ok: true,
+        code: 200,
+        data: refreshResult.token,
+      };
+      res.cookie("refreshToken", refreshResult.refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
+
+      res.status(200).json(response);
+    } catch (err) {
+      next(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  async Logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const rawRefresh = req.cookies.refreshToken as string;
+
+      await this.authenticationService.logout({ rawRefresh });
+
+      const response: ApiResponse<null> = {
+        ok: true,
+        code: 200,
+        data: null,
+      };
+      res.clearCookie("refreshToken", REFRESH_TOKEN_COOKIE_OPTIONS);
+      res.status(200).json(response);
+    } catch (err) {
+      next(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+}

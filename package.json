@@ -16,6 +16,7 @@
     "ai:run": "node tools/ai-runner.js",
     "build": "tsc",
     "dev": "tsx index.ts",
+    "dev:watch": "tsx watch index.ts",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "test": "vitest run",

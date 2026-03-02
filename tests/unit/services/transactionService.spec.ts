@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "@src/services/transactionService";
+import "../../../src/services/transactionService";
 
 describe("Transaction Service", () => {
   describe("createTransaction", () => {

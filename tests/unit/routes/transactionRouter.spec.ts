@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "@src/routes/transactionRouter";
+import "../../../src/routes/transactionRouter";
 
 describe("Transaction Routes", () => {
   it.todo("should have POST endpoint to create transaction");

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "@src/config/db";
+import "../../../src/config/db";
 
 describe("Database Config", () => {
   it.todo("should initialize database connection");
