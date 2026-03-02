@@ -3,7 +3,7 @@ import type { IUserRepository, ITokenRepository } from "../../core/interfaces";
 import type {
   AuthResponseDto,
   CreateUserDto,
-  RefreshTokenResponseDto,
+  TokenResponseDto,
   UserResponseDto,
 } from "../dtos";
 import { AuthenticationMapper } from "../mappers/authentication";
@@ -110,7 +110,7 @@ export class AuthenticationService {
 
   async refresh(params: {
     rawRefresh: string;
-  }): Promise<{ token: RefreshTokenResponseDto; refreshToken: string }> {
+  }): Promise<{ token: TokenResponseDto; refreshToken: string }> {
     const { rawRefresh } = params;
 
     const payload = await verifyJwt(rawRefresh, this.jwtRefreshSecret);
@@ -166,7 +166,7 @@ export class AuthenticationService {
     );
 
     return {
-      token: { token: newToken } as RefreshTokenResponseDto,
+      token: { token: newToken } as TokenResponseDto,
       refreshToken: newRefreshToken,
     };
   }
