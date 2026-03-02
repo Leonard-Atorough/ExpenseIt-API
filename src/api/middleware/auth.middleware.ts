@@ -4,8 +4,8 @@
 // If invalid or missing, returns 401 Unauthorized
 // Usage: app.use('/transactions', authenticationMiddleware, transactionRouter)
 
-import { verifyJwt } from "../utils/jwtUtils.ts";
 import type { Request, Response, NextFunction } from "express";
+import { verifyJwt } from "../utils/jwtUtils";
 
 export async function authenticationHandler(req: Request, res: Response, next: NextFunction) {
   try {

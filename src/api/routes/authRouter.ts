@@ -1,0 +1,23 @@
+import { Router } from "express";
+import { AuthenticationController } from "../controllers";
+import type { PrismaClient } from "@prisma/client";
+
+export default function authRouter(prisma: PrismaClient) {
+  const authRouter = Router();
+
+  const authenticationController = new AuthenticationController(prisma);
+
+  authRouter.get("/", (req, res) => {
+    res.status(200).json({ message: "Auth route is working" });
+  });
+
+  authRouter.post("/register", authenticationController.Register.bind(authenticationController));
+
+  authRouter.post("/refresh", authenticationController.Refresh.bind(authenticationController));
+
+  authRouter.post("/login", authenticationController.Login.bind(authenticationController));
+
+  authRouter.post("/logout", authenticationController.Logout.bind(authenticationController));
+
+  return authRouter as Router;
+}

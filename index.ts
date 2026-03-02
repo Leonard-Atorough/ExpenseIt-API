@@ -2,10 +2,11 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
-import authRouter from "./src/routes/authRouter.js";
-import { initDb } from "./src/config/db.ts";
-import transactionRouter from "./src/routes/transactionRouter.js";
-import errorHandler from "./src/middleware/error.middleware.js";
+
+import { initDb } from "./src/infrastructure/config/db.ts";
+
+import errorHandler from "src/api/middleware/error.middleware.js";
+import { authRouter, transactionRouter } from "src/api/routes";
 
 const app = express();
 
@@ -18,7 +19,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "User-Agent", "X-Forwarded-For"],
-  })
+  }),
 );
 
 app.use(express.json());
@@ -42,6 +43,6 @@ app.listen(PORT, async (error) => {
 
   console.log(`ExpenseIt API running on http://localhost:${PORT}/`);
 
-  const posts = await prisma.user.findMany();
-  console.log(posts);
+  const users = await prisma.user.findMany();
+  console.log(users);
 });
