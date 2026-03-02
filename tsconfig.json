@@ -2,19 +2,19 @@
   "extends": ["@tsconfig/node24/tsconfig.json", "@tsconfig/node-ts/tsconfig.json"],
   "compilerOptions": {
     "outDir": "./dist",
-    "baseUrl": ".",
-    "strict": false,
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "checkJs": true,
-    "target": "es2022",
-    "module": "es2022",
+    "target": "es2023",
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "baseUrl": ".",
     "paths": {
-      "@prisma/generated": ["generated/prisma/client"]
+      "@src/*": ["src/*"]
     }
   },
   "include": ["src/**/*", "index.ts"],
