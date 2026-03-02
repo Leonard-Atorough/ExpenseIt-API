@@ -46,7 +46,7 @@ export class UserRepository implements IUserRepository {
           data: {
             firstName,
             email,
-            ...(lastName && { lastName }),
+            ...(lastName !== undefined && { lastName }),
           },
           include: { account: true },
         });
@@ -59,7 +59,7 @@ export class UserRepository implements IUserRepository {
       data: {
         firstName,
         email,
-        ...(lastName && { lastName }),
+        ...(lastName !== undefined && { lastName }),
         account: password ? { create: { password } } : undefined,
       },
       include: { account: true },
