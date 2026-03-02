@@ -2,6 +2,7 @@ import type { ITransactionRepository } from "src/core/interfaces";
 import type { CreateTransactionDto, TransactionResponseDto } from "../dtos";
 import type Transaction from "src/core/entities/transactionAggregate/transaction";
 import { TransactionMapper } from "../mappers/transaction";
+import type { TransactionType } from "@src/core/entities/transactionAggregate/transactionType";
 
 export class TransactionService {
   private transactionRepository: ITransactionRepository;
@@ -63,7 +64,7 @@ export class TransactionService {
 
     existingTransaction.update({
       amount: transaction.amount,
-      type: transaction.type as "Income" | "Expense",
+      type: transaction.type as TransactionType,
       category: existingTransaction.convertStingToCategory(transaction.category),
       description: transaction.description,
       date: transaction.transactionDate,
