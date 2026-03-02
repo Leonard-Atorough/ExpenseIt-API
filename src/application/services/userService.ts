@@ -15,16 +15,12 @@ export class UserService {
       throw new Error("User not found");
     }
 
-    const updatedUser = existingUser.update({
+    existingUser.update({
       firstName: data.firstName,
       lastName: data.lastName,
-      profilePicture: data.profilePicture,
-      profileName: data.profileName,
     });
 
-    const userToSave = AuthenticationMapper.toDomain(updatedUser);
-
-    const savedUser = await this.userRepository.save(userToSave);
+    const savedUser = await this.userRepository.save(AuthenticationMapper.toDomain(existingUser));
 
     if (!savedUser) {
       throw new Error("Failed to update user");
