@@ -7,8 +7,6 @@ export class AuthenticationMapper {
       email: raw.email,
       firstName: raw.firstName,
       lastName: raw.lastName,
-      profilePicture: raw.profilePicture,
-      profileName: raw.profileName,
       ...(raw.password && { account: new Account(raw.password) }),
     });
   }
@@ -19,8 +17,6 @@ export class AuthenticationMapper {
       email: raw.email,
       firstName: raw.firstName,
       lastName: raw.lastName,
-      profilePicture: raw.profilePicture,
-      profileName: raw.profileName,
       account: new Account(raw.account?.password || "", true),
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
@@ -33,8 +29,6 @@ export class AuthenticationMapper {
       email: domain.email,
       firstName: domain.firstName,
       lastName: domain.lastName,
-      profilePicture: domain.profilePicture,
-      profileName: domain.profileName,
       password: domain.account.getHashedPassword(),
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
@@ -47,8 +41,6 @@ export class AuthenticationMapper {
       email: domain.email,
       firstName: domain.firstName,
       lastName: domain.lastName,
-      profilePicture: domain.profilePicture,
-      profileName: domain.profileName,
     };
   }
 }

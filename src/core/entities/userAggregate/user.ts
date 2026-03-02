@@ -5,16 +5,12 @@ export default class User extends BaseEntity {
   email: string;
   firstName: string;
   lastName: string;
-  profilePicture: string;
-  profileName: string;
   account: Account;
   private constructor(
     id: string | undefined,
     email: string,
     firstName: string,
     lastName: string,
-    profilePicture: string,
-    profileName: string,
     account: Account,
     createdAt?: Date,
     updatedAt?: Date,
@@ -23,8 +19,6 @@ export default class User extends BaseEntity {
     this.email = email;
     this.firstName = firstName;
     this.lastName = lastName;
-    this.profilePicture = profilePicture;
-    this.profileName = profileName;
     this.account = account;
   }
 
@@ -32,18 +26,14 @@ export default class User extends BaseEntity {
     email: string;
     firstName: string;
     lastName: string;
-    profilePicture: string;
-    profileName: string;
     account: Account;
   }): User {
-    const { email, firstName, lastName, profilePicture, profileName, account } = params;
+    const { email, firstName, lastName, account } = params;
     return new User(
       undefined,
       email,
       firstName,
       lastName,
-      profilePicture,
-      profileName,
       account,
       undefined,
       undefined,
@@ -55,8 +45,6 @@ export default class User extends BaseEntity {
     email: string;
     firstName: string;
     lastName: string;
-    profilePicture: string;
-    profileName: string;
     account: Account;
     createdAt: Date;
     updatedAt: Date;
@@ -66,8 +54,6 @@ export default class User extends BaseEntity {
       email,
       firstName,
       lastName,
-      profilePicture,
-      profileName,
       account,
       createdAt,
       updatedAt,
@@ -77,8 +63,6 @@ export default class User extends BaseEntity {
       email,
       firstName,
       lastName,
-      profilePicture,
-      profileName,
       account,
       createdAt,
       updatedAt,
@@ -89,16 +73,12 @@ export default class User extends BaseEntity {
     email?: string;
     firstName?: string;
     lastName?: string;
-    profilePicture?: string;
-    profileName?: string;
     account?: Account;
   }): void {
-    const { email, firstName, lastName, profilePicture, profileName, account } = params;
+    const { email, firstName, lastName, account } = params;
     if (email) this.email = email;
     if (firstName) this.firstName = firstName;
     if (lastName) this.lastName = lastName;
-    if (profilePicture) this.profilePicture = profilePicture;
-    if (profileName) this.profileName = profileName;
     if (account) this.account = account;
   }
 }
