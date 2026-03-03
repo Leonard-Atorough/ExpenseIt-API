@@ -1,0 +1,813 @@
+openapi: 3.0.3
+
+info:
+  title: ExpenseIt API
+  version: "1.0.0"
+  description: |
+    Backend API for the ExpenseIt personal expense tracking application.
+
+    ## Response Envelope
+
+    Every endpoint returns a standard **`ApiResponse`** wrapper:
+
+    ```json
+    {
+      "ok": true,
+      "code": 200,
+      "data": { ... },
+      "message": "Optional human-readable message"
+    }
+    ```
+
+    Errors use the same shape with `ok: false` and a `message` field:
+
+    ```json
+    {
+      "ok": false,
+      "code": 401,
+      "message": "Unauthorized"
+    }
+    ```
+
+    ## Authentication
+
+    Protected endpoints require a valid **JWT access token** obtained from
+    `POST /api/auth/login` or `POST /api/auth/refresh`.
+
+    Pass it as:
+    ```
+    Authorization: Bearer <access_token>
+    ```
+
+    Token refresh uses an **httpOnly `refreshToken` cookie** set automatically
+    by the server on login. The browser sends it automatically; API clients
+    must persist and replay the cookie manually.
+
+  contact:
+    name: Leonard Atorough
+
+servers:
+  - url: http://localhost:3001
+    description: Local development server
+
+tags:
+  - name: Health
+    description: Liveness and readiness probes
+  - name: Authentication
+    description: Registration, login, token refresh, and logout
+  - name: Transactions
+    description: Create and retrieve financial transactions
+  - name: Users
+    description: User profile management
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Paths
+# ─────────────────────────────────────────────────────────────────────────────
+
+paths:
+
+  # ── Health ─────────────────────────────────────────────────────────────────
+
+  /ping:
+    get:
+      tags: [Health]
+      summary: API health check
+      operationId: ping
+      responses:
+        "200":
+          description: API is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  data:
+                    type: string
+                    example: "Welcome to the ExpenseIt-API"
+
+  # ── Authentication ─────────────────────────────────────────────────────────
+
+  /api/auth:
+    get:
+      tags: [Authentication]
+      summary: Auth route health check
+      operationId: authHealth
+      responses:
+        "200":
+          description: Auth route is working
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Auth route is working"
+
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user account
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserApiResponse"
+        "409":
+          description: A user with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+              example:
+                ok: false
+                code: 409
+                message: "Email is already registered"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login and obtain an access token
+      operationId: login
+      description: |
+        Validates credentials and returns a short-lived **JWT access token** in
+        the response body alongside user details.
+
+        A long-lived **`refreshToken`** is also issued as an httpOnly cookie
+        (`Path=/api/auth`) and must be sent to `/api/auth/refresh` to obtain a
+        new access token when the current one expires.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh token cookie
+              schema:
+                type: string
+                example: "refreshToken=<token>; Path=/api/auth; HttpOnly; SameSite=Lax"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthApiResponse"
+        "401":
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+              example:
+                ok: false
+                code: 401
+                message: "Invalid credentials"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh the access token
+      operationId: refreshToken
+      description: |
+        Exchanges a valid **`refreshToken` cookie** for a new JWT access token.
+        The old refresh token is invalidated and a **new `refreshToken` cookie**
+        is issued (token rotation).
+
+        > **Note for API clients:** The `refreshToken` cookie is `HttpOnly` and
+        > `SameSite=Lax`. Browser-based clients receive and send it automatically.
+        > Non-browser clients must manage the cookie manually.
+      security:
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Token refreshed successfully
+          headers:
+            Set-Cookie:
+              description: Rotated httpOnly refresh token cookie
+              schema:
+                type: string
+                example: "refreshToken=<newToken>; Path=/api/auth; HttpOnly; SameSite=Lax"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenApiResponse"
+        "401":
+          description: Refresh token missing, expired, or already used
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+              example:
+                ok: false
+                code: 401
+                message: "Refresh token is invalid or expired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout and invalidate the refresh token
+      operationId: logout
+      description: |
+        Invalidates the server-side refresh token and clears the `refreshToken`
+        cookie. The access token is **not** explicitly revoked — clients should
+        discard it locally.
+      security:
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyApiResponse"
+              example:
+                ok: true
+                code: 200
+        "401":
+          description: No valid refresh token provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get the currently authenticated user
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user's details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ── Transactions ────────────────────────────────────────────────────────────
+
+  /api/transactions:
+    get:
+      tags: [Transactions]
+      summary: List all transactions for the authenticated user
+      operationId: getTransactions
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Transaction list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionListApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      tags: [Transactions]
+      summary: Create a new transaction
+      operationId: createTransaction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionRequest"
+      responses:
+        "201":
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionApiResponse"
+        "400":
+          description: Request body failed validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+              example:
+                ok: false
+                code: 400
+                message: "amount must be a positive number"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/transactions/{transactionId}:
+    get:
+      tags: [Transactions]
+      summary: Get a transaction by ID
+      operationId: getTransactionById
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TransactionId"
+      responses:
+        "200":
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Transaction not found or does not belong to the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+              example:
+                ok: false
+                code: 404
+                message: "Transaction not found or access denied"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ── Users ───────────────────────────────────────────────────────────────────
+
+  /api/users/profile:
+    get:
+      tags: [Users]
+      summary: Get the authenticated user's profile
+      operationId: getProfile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      tags: [Users]
+      summary: Update the authenticated user's profile
+      operationId: updateProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      tags: [Users]
+      summary: Delete the authenticated user's account
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User account deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyApiResponse"
+              example:
+                ok: true
+                code: 200
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Components
+# ─────────────────────────────────────────────────────────────────────────────
+
+components:
+
+  # ── Security Schemes ────────────────────────────────────────────────────────
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT access token issued by `POST /api/auth/login`.
+        Pass as `Authorization: Bearer <token>`.
+        Tokens expire and must be renewed via `POST /api/auth/refresh`.
+
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+      description: |
+        Long-lived HttpOnly refresh token cookie (`Path=/api/auth`, `SameSite=Lax`).
+        Set automatically by the server on login and rotated on every refresh call.
+
+  # ── Reusable Parameters ─────────────────────────────────────────────────────
+
+  parameters:
+    TransactionId:
+      name: transactionId
+      in: path
+      required: true
+      description: UUID of the transaction
+      schema:
+        type: string
+        format: uuid
+        example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+  # ── Reusable Responses ──────────────────────────────────────────────────────
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            ok: false
+            code: 401
+            message: "Unauthorized: Invalid or expired token"
+
+    InternalServerError:
+      description: Unexpected server-side error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            ok: false
+            code: 500
+            message: "An unexpected error occurred"
+
+  # ── Schemas ─────────────────────────────────────────────────────────────────
+
+  schemas:
+
+    # ── Request Bodies ──────────────────────────────────────────────────────
+
+    CreateUserRequest:
+      type: object
+      required: [email, password, firstName, lastName]
+      description: Payload for registering a new user account
+      properties:
+        email:
+          type: string
+          format: email
+          example: "jane.doe@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "S3cureP@ss!"
+        firstName:
+          type: string
+          example: "Jane"
+        lastName:
+          type: string
+          example: "Doe"
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      description: Credentials for authenticating an existing user
+      properties:
+        email:
+          type: string
+          format: email
+          example: "jane.doe@example.com"
+        password:
+          type: string
+          format: password
+          example: "S3cureP@ss!"
+
+    UpdateUserRequest:
+      type: object
+      description: |
+        Fields to update on the currently authenticated user's profile.
+        All fields are optional; only supplied fields are updated.
+      properties:
+        firstName:
+          type: string
+          example: "Jane"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "jane.new@example.com"
+        profilePicture:
+          type: string
+          format: uri
+          example: "https://cdn.example.com/avatars/jane.png"
+        profileName:
+          type: string
+          example: "janie_doe"
+
+    CreateTransactionRequest:
+      type: object
+      required: [amount, type, category, description, transactionDate]
+      description: Payload for recording a new financial transaction
+      properties:
+        amount:
+          type: number
+          format: float
+          minimum: 0.01
+          example: 42.50
+        type:
+          type: string
+          enum: [income, expense]
+          example: "expense"
+        category:
+          type: string
+          example: "Groceries"
+        description:
+          type: string
+          example: "Weekly grocery run"
+        transactionDate:
+          type: string
+          format: date-time
+          example: "2026-03-01T10:00:00.000Z"
+
+    # ── Domain Objects ──────────────────────────────────────────────────────
+
+    User:
+      type: object
+      description: A registered ExpenseIt user
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "c1d2e3f4-a5b6-7890-abcd-ef1234567890"
+        firstName:
+          type: string
+          example: "Jane"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "jane.doe@example.com"
+        profilePicture:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://cdn.example.com/avatars/jane.png"
+        profileName:
+          type: string
+          nullable: true
+          example: "janie_doe"
+
+    AuthUser:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          required: [token]
+          description: User object extended with a short-lived JWT access token, returned on login
+          properties:
+            token:
+              type: string
+              description: JWT access token
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    AccessToken:
+      type: object
+      required: [token]
+      description: A newly issued JWT access token (returned after a successful refresh)
+      properties:
+        token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    Transaction:
+      type: object
+      description: A single financial transaction
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        amount:
+          type: number
+          format: float
+          example: 42.50
+        type:
+          type: string
+          enum: [income, expense]
+          example: "expense"
+        category:
+          type: string
+          example: "Groceries"
+        description:
+          type: string
+          example: "Weekly grocery run"
+        transactionDate:
+          type: string
+          format: date-time
+          example: "2026-03-01T10:00:00.000Z"
+
+    # ── Response Envelope ───────────────────────────────────────────────────
+
+    ApiResponse:
+      type: object
+      description: |
+        Standard response envelope returned by every endpoint.
+
+        | Field     | Type    | Notes                                          |
+        |-----------|---------|------------------------------------------------|
+        | `ok`      | boolean | `true` on success, `false` on error            |
+        | `code`    | integer | HTTP status code mirrored in the body          |
+        | `data`    | any     | Payload – shape varies by endpoint (see below) |
+        | `message` | string  | Optional human-readable message                |
+      required: [ok, code]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        data:
+          description: Response payload. Shape depends on the endpoint.
+        message:
+          type: string
+          example: "Transactions fetched successfully"
+
+    ApiErrorResponse:
+      type: object
+      description: Standard error envelope returned on all 4xx / 5xx responses
+      required: [ok, code, message]
+      properties:
+        ok:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 401
+        message:
+          type: string
+          example: "Unauthorized"
+        internal:
+          type: string
+          description: Internal debug detail — omitted in production environments
+
+    # ── Concrete ApiResponse<T> shapes ────────────────────────────────────────
+    # OpenAPI 3.0 has no real generics, so we define typed wrappers explicitly.
+
+    UserApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/User"
+      example:
+        ok: true
+        code: 200
+        data:
+          id: "c1d2e3f4-a5b6-7890-abcd-ef1234567890"
+          firstName: "Jane"
+          lastName: "Doe"
+          email: "jane.doe@example.com"
+          profilePicture: null
+          profileName: "janie_doe"
+
+    AuthApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/AuthUser"
+      example:
+        ok: true
+        code: 200
+        data:
+          id: "c1d2e3f4-a5b6-7890-abcd-ef1234567890"
+          firstName: "Jane"
+          lastName: "Doe"
+          email: "jane.doe@example.com"
+          profilePicture: null
+          profileName: "janie_doe"
+          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    TokenApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/AccessToken"
+      example:
+        ok: true
+        code: 200
+        data:
+          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    TransactionApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                transaction:
+                  $ref: "#/components/schemas/Transaction"
+      example:
+        ok: true
+        code: 200
+        message: "Transaction fetched successfully"
+        data:
+          transaction:
+            id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            amount: 42.50
+            type: "expense"
+            category: "Groceries"
+            description: "Weekly grocery run"
+            transactionDate: "2026-03-01T10:00:00.000Z"
+
+    TransactionListApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                transactions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Transaction"
+      example:
+        ok: true
+        code: 200
+        message: "Transactions fetched successfully"
+        data:
+          transactions:
+            - id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              amount: 42.50
+              type: "expense"
+              category: "Groceries"
+              description: "Weekly grocery run"
+              transactionDate: "2026-03-01T10:00:00.000Z"
+
+    EmptyApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          description: Success response with no data payload (e.g. logout)
+      example:
+        ok: true
+        code: 200

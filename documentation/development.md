@@ -53,7 +53,7 @@ npx prisma db seed
 npm run dev
 ```
 
-Server will start at `http://localhost:3000` (or port specified in `.env`).
+Server will start at `http://localhost:3001` (port specified in `.env`).
 
 ---
 
@@ -63,7 +63,7 @@ Create a `.env` file in the project root:
 
 ```bash
 # Server Configuration
-PORT=3000
+PORT=3001
 NODE_ENV=development
 
 # Database
@@ -298,7 +298,7 @@ router.get("/summary", authenticationHandler, controller.getSummary);
 **Step 4**: Test:
 
 ```bash
-curl http://localhost:3000/transactions/summary \
+curl http://localhost:3001/transactions/summary \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -421,9 +421,9 @@ DEBUG="prisma:query" npm run dev
 npm install -g httpie
 
 # Usage
-http POST :3000/auth/register firstName=John email=john@test.com password=test123
-http POST :3000/auth/login email=john@test.com password=test123
-http :3000/transactions Authorization:"Bearer <token>"
+http POST :3001/auth/register firstName=John email=john@test.com password=test123
+http POST :3001/auth/login email=john@test.com password=test123
+http :3001/transactions Authorization:"Bearer <token>"
 ```
 
 ### Automated Testing
@@ -553,25 +553,25 @@ res.cookie("refreshToken", token, {
 });
 
 // 3. Client must send credentials
-fetch("http://localhost:3000/auth/refresh", {
+fetch("http://localhost:3001/auth/refresh", {
   method: "POST",
   credentials: "include", // Important!
 });
 ```
 
-### Issue: "Error: listen EADDRINUSE :::3000"
+### Issue: "Error: listen EADDRINUSE :::3001"
 
-**Cause**: Port 3000 already in use
+**Cause**: Port 3001 already in use
 
 **Solutions**:
 
 ```bash
 # Option 1: Kill existing process
 # macOS/Linux
-lsof -ti:3000 | xargs kill -9
+lsof -ti:3001 | xargs kill -9
 
 # Windows (PowerShell)
-Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess | Stop-Process -Force
+Get-Process -Id (Get-NetTCPConnection -LocalPort 3001).OwningProcess | Stop-Process -Force
 
 # Option 2: Use different port
 PORT=3001 npm run dev

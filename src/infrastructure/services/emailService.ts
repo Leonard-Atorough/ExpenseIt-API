@@ -14,7 +14,7 @@ export function emailService(prisma: PrismaClient) {
   async function sendVerificationEmail(email: string, token: string): Promise<void> {
     // Implementation to send email
     console.log(`Sending verification email to ${email} with token ${token}`);
-    const verificationLink = `https://localhost:3000/auth/verify?token=${token}`;
+    const verificationLink = `https://localhost:3001/auth/verify?token=${token}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,

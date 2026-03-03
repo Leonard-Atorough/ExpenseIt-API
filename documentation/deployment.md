@@ -18,7 +18,7 @@
 - [ ] `NODE_ENV=production`
 - [ ] `COOKIE_SECURE=true`
 - [ ] CORS origins restricted (no wildcard `*`)
-- [ ] Port configured (default: 3000)
+- [ ] Port configured (default: 3001)
 
 ### Security
 
@@ -54,7 +54,7 @@
 ```bash
 # Server
 NODE_ENV=production
-PORT=3000
+PORT=3001
 
 # Database (PostgreSQL recommended)
 DATABASE_URL="postgresql://username:password@host:5432/expenseit?schema=public"
@@ -425,7 +425,7 @@ server {
     server_name api.yourdomain.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -481,7 +481,7 @@ RUN npm run prisma:generate
 RUN npm run build
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3001
 
 # Run migrations and start
 CMD ["sh", "-c", "npm run prisma:migrate:deploy && npm start"]
@@ -507,7 +507,7 @@ services:
   api:
     build: .
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://expenseit:secure_password@db:5432/expenseit
@@ -1048,7 +1048,7 @@ npx prisma migrate reset
 
 ```bash
 # Find process using port
-lsof -ti:3000
+lsof -ti:3001
 
 # Kill process
 kill -9 <PID>

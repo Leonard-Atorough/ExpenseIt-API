@@ -566,7 +566,7 @@ CLIENT_ORIGIN="http://localhost:3000"
 **Register**:
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:3001/auth/register \
   -H "Content-Type: application/json" \
   -d '{"firstName":"John","email":"john@test.com","password":"test123"}'
 ```
@@ -574,7 +574,7 @@ curl -X POST http://localhost:3000/auth/register \
 **Login**:
 
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:3001/auth/login \
   -H "Content-Type: application/json" \
   -c cookies.txt \
   -d '{"email":"john@test.com","password":"test123"}'
@@ -583,14 +583,14 @@ curl -X POST http://localhost:3000/auth/login \
 **Access Protected Endpoint**:
 
 ```bash
-curl http://localhost:3000/transactions \
+curl http://localhost:3001/transactions \
   -H "Authorization: Bearer <access-token-from-login>"
 ```
 
 **Refresh Token**:
 
 ```bash
-curl -X POST http://localhost:3000/auth/refresh \
+curl -X POST http://localhost:3001/auth/refresh \
   -b cookies.txt \
   -c cookies.txt
 ```
@@ -598,7 +598,7 @@ curl -X POST http://localhost:3000/auth/refresh \
 **Logout**:
 
 ```bash
-curl -X POST http://localhost:3000/auth/logout \
+curl -X POST http://localhost:3001/auth/logout \
   -H "Authorization: Bearer <access-token>" \
   -b cookies.txt
 ```
