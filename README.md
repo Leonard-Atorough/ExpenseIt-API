@@ -98,37 +98,37 @@ Swagger UI (non-production only): `http://localhost:3001/api-docs`
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `PORT` | Yes | - | HTTP port for the API server |
-| `DATABASE_URL` | Yes | - | PostgreSQL connection string |
-| `JWT_ACCESS_SECRET` | Yes | - | Secret used to sign access tokens |
-| `JWT_REFRESH_SECRET` | Yes | - | Secret used to sign refresh tokens |
-| `ACCESS_TOKEN_EXP` | No | `15m` | Access token lifespan |
-| `REFRESH_TOKEN_EXP` | No | `7d` | Refresh token lifespan |
-| `CLIENT_ORIGIN` | No | `http://localhost:3000` | Allowed CORS origin |
-| `COOKIE_SECURE` | No | `false` | Set `true` for HTTPS-only cookies |
-| `NODE_ENV` | No | `development` | Runtime environment |
-| `EMAIL_USER` | No | empty | SMTP/email account user |
-| `EMAIL_PASS` | No | empty | SMTP/email account password |
+| Variable             | Required | Default                 | Description                        |
+| -------------------- | -------- | ----------------------- | ---------------------------------- |
+| `PORT`               | Yes      | -                       | HTTP port for the API server       |
+| `DATABASE_URL`       | Yes      | -                       | PostgreSQL connection string       |
+| `JWT_ACCESS_SECRET`  | Yes      | -                       | Secret used to sign access tokens  |
+| `JWT_REFRESH_SECRET` | Yes      | -                       | Secret used to sign refresh tokens |
+| `ACCESS_TOKEN_EXP`   | No       | `15m`                   | Access token lifespan              |
+| `REFRESH_TOKEN_EXP`  | No       | `7d`                    | Refresh token lifespan             |
+| `CLIENT_ORIGIN`      | No       | `http://localhost:3000` | Allowed CORS origin                |
+| `COOKIE_SECURE`      | No       | `false`                 | Set `true` for HTTPS-only cookies  |
+| `NODE_ENV`           | No       | `development`           | Runtime environment                |
+| `EMAIL_USER`         | No       | empty                   | SMTP/email account user            |
+| `EMAIL_PASS`         | No       | empty                   | SMTP/email account password        |
 
 ## Available Scripts
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Start API in development mode |
-| `npm run dev:watch` | Start API with watch mode |
-| `npm run build` | Compile TypeScript |
-| `npm run typecheck` | Run TypeScript type checks only |
-| `npm run lint` | Run ESLint |
-| `npm run prisma:migrate` | Run Prisma migrations |
-| `npm run prisma:generate` | Generate Prisma client |
-| `npm run test` | Run all tests once |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run test:ui` | Run tests with Vitest UI |
-| `npm run test:coverage` | Run tests with coverage report |
-| `npm run test:unit` | Run unit tests |
-| `npm run test:integration` | Run integration tests |
+| Script                     | Description                     |
+| -------------------------- | ------------------------------- |
+| `npm run dev`              | Start API in development mode   |
+| `npm run dev:watch`        | Start API with watch mode       |
+| `npm run build`            | Compile TypeScript              |
+| `npm run typecheck`        | Run TypeScript type checks only |
+| `npm run lint`             | Run ESLint                      |
+| `npm run prisma:migrate`   | Run Prisma migrations           |
+| `npm run prisma:generate`  | Generate Prisma client          |
+| `npm run test`             | Run all tests once              |
+| `npm run test:watch`       | Run tests in watch mode         |
+| `npm run test:ui`          | Run tests with Vitest UI        |
+| `npm run test:coverage`    | Run tests with coverage report  |
+| `npm run test:unit`        | Run unit tests                  |
+| `npm run test:integration` | Run integration tests           |
 
 ## API Overview
 
