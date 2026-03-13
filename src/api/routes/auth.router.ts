@@ -5,7 +5,7 @@ import { AuthenticationService } from "@src/application/services/authenticationS
 import { TokenRepository, UserRepository } from "@src/infrastructure/repositories";
 import { authenticationHandler } from "../middleware/auth.middleware";
 
-export default function authRouter(prisma: PrismaClient) {
+export default function createAuthRouter(prisma: PrismaClient) {
   const authRouter = Router();
 
   const authenticationController = new AuthenticationController(

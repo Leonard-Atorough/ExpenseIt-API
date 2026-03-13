@@ -3,7 +3,7 @@ import { userController } from "../../controllers/userController.ts";
 import { authenticationHandler } from "../middleware/auth.middleware.ts";
 import type { PrismaClient } from "@prisma/client";
 
-export default function userRouter(prisma: PrismaClient) {
+export default function createUserRouter(prisma: PrismaClient) {
   const userRouter = Router();
     const { getProfile, updateProfile, deleteUser } = userController(prisma);
 

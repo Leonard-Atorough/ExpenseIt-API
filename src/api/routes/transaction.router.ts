@@ -5,7 +5,7 @@ import type { PrismaClient } from "@prisma/client";
 import { TransactionService } from "@src/application/services";
 import { TransactionRepository } from "@src/infrastructure/repositories";
 
-export default function transactionRouter(prisma: PrismaClient) {
+export default function createTransactionRouter(prisma: PrismaClient) {
   const transactionRouter = Router();
 
   const transactionController = new TransactionController(new TransactionService(new TransactionRepository(prisma)));
