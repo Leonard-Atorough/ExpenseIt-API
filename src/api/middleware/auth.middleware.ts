@@ -1,11 +1,6 @@
-// Router level authentication middleware to protect transaction routes
-// Checks for valid JWT in Authorization header
-// If valid, attaches user info to req.user and calls next()
-// If invalid or missing, returns 401 Unauthorized
-// Usage: app.use('/transactions', authenticationMiddleware, transactionRouter)
-
 import type { Request, Response, NextFunction } from "express";
 import { verifyJwt } from "../utils/jwtUtils";
+import { ENVIRONMENT_CONFIG } from "@config";
 
 export async function authenticationHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -20,7 +15,7 @@ export async function authenticationHandler(req: Request, res: Response, next: N
     }
     const token = parts[1];
 
-    const jwtSecret = process.env.JWT_ACCESS_SECRET;
+    const jwtSecret = ENVIRONMENT_CONFIG.JWT_ACCESS_SECRET;
 
     if (!jwtSecret) {
       console.error("JWT_ACCESS_SECRET is not defined in environment variables");

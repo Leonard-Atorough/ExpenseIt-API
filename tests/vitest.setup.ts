@@ -1,17 +1,20 @@
 import { vi } from "vitest";
+import { ENVIRONMENT_CONFIG } from "@config";
 
 // Set required environment variables for tests
-process.env.JWT_ACCESS_SECRET = "test-access-secret";
-process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
+ENVIRONMENT_CONFIG.JWT_ACCESS_SECRET = "test-access-secret";
+ENVIRONMENT_CONFIG.JWT_REFRESH_SECRET = "test-refresh-secret";
 
-const mockBcryptHash = vi.fn((password: string, saltOrRounds: number | string, callback?: Function) => {
-  const result = `hashed-${password}`;
-  if (typeof callback === "function") {
-    callback(null, result);
-    return;
-  }
-  return Promise.resolve(result);
-});
+const mockBcryptHash = vi.fn(
+  (password: string, saltOrRounds: number | string, callback?: Function) => {
+    const result = `hashed-${password}`;
+    if (typeof callback === "function") {
+      callback(null, result);
+      return;
+    }
+    return Promise.resolve(result);
+  },
+);
 
 const mockBcryptCompare = vi.fn((plain: string, hash: string, callback?: Function) => {
   if (typeof callback === "function") {

@@ -6,6 +6,9 @@ export default defineConfig({
     alias: {
       "@src": path.resolve(__dirname, "./src"),
       src: path.resolve(__dirname, "./src"),
+      "@config": path.resolve(__dirname, "./config.ts"),
+      config: path.resolve(__dirname, "./config.ts"),
+      "@prisma": path.resolve(__dirname, "./src/infrastructure/config/prisma.ts"),
     },
   },
   test: {

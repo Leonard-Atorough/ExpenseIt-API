@@ -98,19 +98,19 @@ Swagger UI (non-production only): `http://localhost:3001/api-docs`
 
 ## Environment Variables
 
-| Variable             | Required | Default                 | Description                        |
-| -------------------- | -------- | ----------------------- | ---------------------------------- |
-| `PORT`               | Yes      | -                       | HTTP port for the API server       |
-| `DATABASE_URL`       | Yes      | -                       | PostgreSQL connection string       |
-| `JWT_ACCESS_SECRET`  | Yes      | -                       | Secret used to sign access tokens  |
-| `JWT_REFRESH_SECRET` | Yes      | -                       | Secret used to sign refresh tokens |
-| `ACCESS_TOKEN_EXP`   | No       | `15m`                   | Access token lifespan              |
-| `REFRESH_TOKEN_EXP`  | No       | `7d`                    | Refresh token lifespan             |
-| `CLIENT_ORIGIN`      | No       | `http://localhost:3000` | Allowed CORS origin                |
-| `COOKIE_SECURE`      | No       | `false`                 | Set `true` for HTTPS-only cookies  |
-| `NODE_ENV`           | No       | `development`           | Runtime environment                |
-| `EMAIL_USER`         | No       | empty                   | SMTP/email account user            |
-| `EMAIL_PASS`         | No       | empty                   | SMTP/email account password        |
+| Variable                   | Required | Default                 | Description                        |
+| -------------------------- | -------- | ----------------------- | ---------------------------------- |
+| `PORT`                     | Yes      | -                       | HTTP port for the API server       |
+| `DATABASE_URL`             | Yes      | -                       | PostgreSQL connection string       |
+| `JWT_ACCESS_SECRET`        | Yes      | -                       | Secret used to sign access tokens  |
+| `JWT_REFRESH_SECRET`       | Yes      | -                       | Secret used to sign refresh tokens |
+| `ACCESS_TOKEN_EXPIRATION`  | No       | `15m`                   | Access token lifespan              |
+| `REFRESH_TOKEN_EXPIRATION` | No       | `7d`                    | Refresh token lifespan             |
+| `CLIENT_ORIGIN`            | No       | `http://localhost:3000` | Allowed CORS origin                |
+| `COOKIE_SECURE`            | No       | `false`                 | Set `true` for HTTPS-only cookies  |
+| `NODE_ENV`                 | No       | `development`           | Runtime environment                |
+| `EMAIL_USER`               | No       | empty                   | SMTP/email account user            |
+| `EMAIL_PASS`               | No       | empty                   | SMTP/email account password        |
 
 ## Available Scripts
 

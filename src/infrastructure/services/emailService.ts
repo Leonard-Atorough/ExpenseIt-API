@@ -1,13 +1,14 @@
 import nodemailer from "nodemailer";
 import type { PrismaClient } from "@prisma/client";
+import { ENVIRONMENT_CONFIG } from "@config";
 
 export function emailService(prisma: PrismaClient) {
   const transporter = nodemailer.createTransport({
     // Configure your email service credentials here
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: ENVIRONMENT_CONFIG.EMAIL_USERNAME,
+      pass: ENVIRONMENT_CONFIG.EMAIL_PASSWORD,
     },
   });
 
@@ -16,7 +17,7 @@ export function emailService(prisma: PrismaClient) {
     console.log(`Sending verification email to ${email} with token ${token}`);
     const verificationLink = `https://localhost:3001/auth/verify?token=${token}`;
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: ENVIRONMENT_CONFIG.EMAIL_USERNAME,
       to: email,
       subject: "Please verify your email address",
       text: `Click the following link to verify your email: ${verificationLink}`,
@@ -38,7 +39,7 @@ export function emailService(prisma: PrismaClient) {
   async function sendNotificationEmail(
     email: string,
     subject: string,
-    message: string
+    message: string,
   ): Promise<void> {
     // Implementation to send notification email
   }

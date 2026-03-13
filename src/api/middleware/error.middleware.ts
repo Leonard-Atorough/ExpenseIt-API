@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { ENVIRONMENT_CONFIG } from "../../../config";
 
 export interface CustomError extends Error {
   code?: number | string;
@@ -44,6 +45,6 @@ export default function errorHandler(
   res.status(errorStatus).json({
     code: errorStatus,
     message: errorMessage,
-    stack: process.env.NODE_ENV === "production" ? "🥞" : err.stack,
+    stack: ENVIRONMENT_CONFIG.NODE_ENV === "production" ? "🥞" : err.stack,
   });
 }

@@ -1,11 +1,12 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../../generated/prisma/client";
+import { ENVIRONMENT_CONFIG } from "@config";
 
 let prisma: PrismaClient;
 
 export function createPrismaClient(): PrismaClient {
   if (!prisma) {
-    const connectionString = process.env.DATABASE_URL || "";
+    const connectionString = ENVIRONMENT_CONFIG.DATABASE_URL;
 
     const pgAdapter = new PrismaPg({
       connectionString,

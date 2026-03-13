@@ -1,15 +1,11 @@
 import type { User } from "src/core/entities";
 import type { IUserRepository, ITokenRepository } from "../../core/interfaces";
-import type {
-  AuthResponseDto,
-  CreateUserDto,
-  TokenResponseDto,
-  UserResponseDto,
-} from "../dtos";
+import type { AuthResponseDto, CreateUserDto, TokenResponseDto, UserResponseDto } from "../dtos";
 import { AuthenticationMapper } from "../mappers/authentication";
 import { signJwt, verifyJwt } from "src/api/utils/jwtUtils";
 import { parseExpiryToMs } from "src/api/utils/timeUtils";
 import type { JwtPayload } from "jsonwebtoken";
+import { ENVIRONMENT_CONFIG } from "@config";
 
 interface JwtPayloadWithRid extends JwtPayload {
   rid: string;
@@ -18,9 +14,9 @@ interface JwtPayloadWithRid extends JwtPayload {
 export class AuthenticationService {
   private readonly CONVERT_TO_SECONDS = 1000;
   private readonly TOKEN_EXPIRY_SECONDS =
-    parseExpiryToMs(process.env.ACCESS_TOKEN_EXP || "15m") / this.CONVERT_TO_SECONDS;
+    parseExpiryToMs(ENVIRONMENT_CONFIG.ACCESS_TOKEN_EXPIRATION) / this.CONVERT_TO_SECONDS;
   private readonly REFRESH_EXPIRY_SECONDS =
-    parseExpiryToMs(process.env.REFRESH_TOKEN_EXP || "7d") / this.CONVERT_TO_SECONDS;
+    parseExpiryToMs(ENVIRONMENT_CONFIG.REFRESH_TOKEN_EXPIRATION) / this.CONVERT_TO_SECONDS;
 
   private userRepository: IUserRepository;
   private tokenRepository: ITokenRepository;
@@ -29,11 +25,11 @@ export class AuthenticationService {
   constructor(userRepository: IUserRepository, tokenRepository: ITokenRepository) {
     this.userRepository = userRepository;
     this.tokenRepository = tokenRepository;
-    if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
+    if (!ENVIRONMENT_CONFIG.JWT_ACCESS_SECRET || !ENVIRONMENT_CONFIG.JWT_REFRESH_SECRET) {
       throw new Error("JWT secrets are not defined in environment variables");
     }
-    this.jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
-    this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+    this.jwtAccessSecret = ENVIRONMENT_CONFIG.JWT_ACCESS_SECRET;
+    this.jwtRefreshSecret = ENVIRONMENT_CONFIG.JWT_REFRESH_SECRET;
   }
 
   async getCurrentUser(userId: string | undefined): Promise<UserResponseDto> {

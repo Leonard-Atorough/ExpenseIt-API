@@ -14,7 +14,8 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@src/*": ["src/*"]
+      "@src/*": ["src/*"],
+      "@config": ["./config.ts"]
     }
   },
   "include": ["src/**/*", "index.ts", "tests/**/*"],
