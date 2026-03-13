@@ -1,11 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import type { TransactionService } from "src/application/services";
 import type {
-  ApiErrorResponse,
   ApiResponse,
   CreateTransactionDto,
   TransactionResponseDto,
 } from "src/application/dtos";
+import { NotFoundError, UnauthorizedError } from "@src/application/errors";
 
 export class TransactionController {
   transactionService: TransactionService;
@@ -16,12 +16,7 @@ export class TransactionController {
   async getTransactions(req: Request, res: Response, next: NextFunction) {
     const userId = req.user?.sub;
     if (!userId) {
-      const response: ApiErrorResponse = {
-        ok: false,
-        code: 401,
-        message: "Unauthorized",
-      };
-      return res.status(401).json(response);
+      throw new UnauthorizedError();
     }
 
     try {
@@ -44,12 +39,7 @@ export class TransactionController {
     const { transactionId } = req.params;
     const userId = req.user?.sub;
     if (!userId) {
-      const response: ApiErrorResponse = {
-        ok: false,
-        code: 401,
-        message: "Unauthorized",
-      };
-      return res.status(401).json(response);
+      throw new UnauthorizedError();
     }
 
     try {
@@ -59,12 +49,7 @@ export class TransactionController {
       });
 
       if (!result) {
-        const response: ApiErrorResponse = {
-          ok: false,
-          code: 404,
-          message: "Transaction not found or access denied",
-        };
-        return res.status(404).json(response);
+        throw new NotFoundError("Transaction not found");
       }
 
       const response: ApiResponse<{ transaction: TransactionResponseDto }> = {
@@ -82,12 +67,7 @@ export class TransactionController {
   async createTransaction(req: Request, res: Response, next: NextFunction) {
     const userId = req.user?.sub;
     if (!userId) {
-      const response: ApiErrorResponse = {
-        ok: false,
-        code: 401,
-        message: "Unauthorized",
-      };
-      return res.status(401).json(response);
+      throw new UnauthorizedError();
     }
 
     const transactionData = req.body as CreateTransactionDto;

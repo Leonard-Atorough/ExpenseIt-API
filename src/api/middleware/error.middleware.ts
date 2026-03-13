@@ -1,17 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
-import { ENVIRONMENT_CONFIG } from "../../../config";
+import { ENVIRONMENT_CONFIG } from "@config";
+import type { AppError } from "src/application/errors";
+import type { ApiErrorResponse } from "@src/application/dtos/common/apiResponse";
 
 export interface CustomError extends Error {
   code?: number | string;
   statusCode?: number;
 }
 
-function getHttpStatusCode(error: CustomError): number {
-  // If explicit statusCode is set, use it
-  if (error.statusCode && typeof error.statusCode === "number") {
-    return error.statusCode;
-  }
-
+function getHttpStatusCode(error: AppError): number {
   // If code is already a number, use it
   if (typeof error.code === "number") {
     return error.code;
@@ -34,7 +31,7 @@ function getHttpStatusCode(error: CustomError): number {
 }
 
 export default function errorHandler(
-  err: CustomError,
+  err: AppError,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -43,8 +40,9 @@ export default function errorHandler(
   const errorStatus = getHttpStatusCode(err);
   const errorMessage = err.message || "Internal Server Error";
   res.status(errorStatus).json({
+    ok: false,
     code: errorStatus,
     message: errorMessage,
     stack: ENVIRONMENT_CONFIG.NODE_ENV === "production" ? "🥞" : err.stack,
-  });
+  } as ApiErrorResponse<string>);
 }

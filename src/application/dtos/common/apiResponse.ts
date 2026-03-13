@@ -12,3 +12,7 @@ export interface ApiErrorResponse {
   message: string;
   internal?: string;
 }
+
+export interface ApiErrorResponse<T = any> extends ApiResponse<T> {
+  stack?: string;
+}
