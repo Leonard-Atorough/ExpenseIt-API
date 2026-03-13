@@ -1,3 +1,3 @@
-export { AuthenticationController } from "./authenticationController.js";
-export { UserController } from "./userController.js";
-export { TransactionController } from "./transactionController.js";
+export { AuthenticationController } from "./authentication.controller.js";
+export { UserController } from "./user.controller.js";
+export { TransactionController } from "./transaction.controller.js";
