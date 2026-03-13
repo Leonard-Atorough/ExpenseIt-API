@@ -1,11 +1,11 @@
-function loadEnvironmentConfig(): EnvironmentConfig {
-  require("dotenv").config();
+import "dotenv/config";
 
+function loadEnvironmentConfig(): EnvironmentConfig {
   function isRequiredEnv(key: string, defaultValue?: string): string {
     const value = process.env[key];
     if (!value) {
-      // check node env. if its dev, allow the default value
-      if (process.env.NODE_ENV === "development" && defaultValue) {
+      // Allow defaults in non-production environments (dev, test, staging)
+      if (process.env.NODE_ENV !== "production" && defaultValue) {
         return defaultValue;
       }
       throw new Error(`Environment variable ${key} is required but not defined`);
@@ -20,15 +20,16 @@ function loadEnvironmentConfig(): EnvironmentConfig {
   const REFRESH_TOKEN_EXPIRATION = isRequiredEnv("REFRESH_TOKEN_EXPIRATION", "7d");
   const COOKIE_SECURE = isRequiredEnv("COOKIE_SECURE", "false");
   const DATABASE_URL = isRequiredEnv("DATABASE_URL");
-  const EMAIL_USERNAME = isRequiredEnv("EMAIL_USERNAME", "");
-  const EMAIL_PASSWORD = isRequiredEnv("EMAIL_PASSWORD", "");
+  const EMAIL_USERNAME = isRequiredEnv("EMAIL_USERNAME", "test@example.com");
+  const EMAIL_PASSWORD = isRequiredEnv("EMAIL_PASSWORD", "testpassword");
   const VERIFICATION_TOKEN_EXPIRATION = isRequiredEnv("VERIFICATION_TOKEN_EXPIRATION", "1h");
   const LOG_LEVEL = isRequiredEnv("LOG_LEVEL", "info");
   const COOKIE_HTTP_ONLY = isRequiredEnv("COOKIE_HTTP_ONLY", "true");
   const COOKIE_SAME_SITE = isRequiredEnv("COOKIE_SAME_SITE", "lax");
+  const TEST_TOKEN = process.env.TEST_TOKEN; // Optional, only for testing purposes
   const NODE_ENV = process.env.NODE_ENV || "development";
 
-  return {
+  const config: EnvironmentConfig = {
     PORT,
     CLIENT_ORIGIN,
     JWT_ACCESS_SECRET,
@@ -43,8 +44,19 @@ function loadEnvironmentConfig(): EnvironmentConfig {
     LOG_LEVEL,
     COOKIE_HTTP_ONLY,
     COOKIE_SAME_SITE,
+    TEST_TOKEN,
     NODE_ENV,
   };
+
+  console.log("Loaded environment configuration:", {
+    ...config,
+    JWT_ACCESS_SECRET: "****",
+    JWT_REFRESH_SECRET: "****",
+    DATABASE_URL: "****",
+    EMAIL_PASSWORD: "****",
+  });
+
+  return config;
 }
 
 export interface EnvironmentConfig {
@@ -62,6 +74,7 @@ export interface EnvironmentConfig {
   EMAIL_PASSWORD: string;
   VERIFICATION_TOKEN_EXPIRATION: string;
   LOG_LEVEL: string;
+  TEST_TOKEN?: string;
   NODE_ENV: string;
 }
 

@@ -16,7 +16,11 @@ export default function createAuthRouter(prisma: PrismaClient) {
     res.status(200).json({ message: "Auth route is working" });
   });
 
-  authRouter.get("/me", authenticationHandler, authenticationController.GetCurrentUser.bind(authenticationController));
+  authRouter.get(
+    "/me",
+    authenticationHandler,
+    authenticationController.GetCurrentUser.bind(authenticationController),
+  );
 
   authRouter.post("/register", authenticationController.Register.bind(authenticationController));
 
@@ -25,6 +29,12 @@ export default function createAuthRouter(prisma: PrismaClient) {
   authRouter.post("/login", authenticationController.Login.bind(authenticationController));
 
   authRouter.post("/logout", authenticationController.Logout.bind(authenticationController));
+
+  /**
+   * This endpoint is for testing purposes only. It allows us to generate a token for a user without going through the login process.
+   * In production, this should be removed or protected with additional authentication.
+   */
+  authRouter.post("/token", authenticationController.GenerateToken.bind(authenticationController));
 
   return authRouter as Router;
 }

@@ -7,4 +7,5 @@ const app = createApp();
 app.listen(ENVIRONMENT_CONFIG.PORT, async (error) => {
   if (error) throw error;
   console.log(`£££ ExpenseIt API running on http://localhost:${ENVIRONMENT_CONFIG.PORT}/ £££`);
+  console.log(`Swagger docs available at http://localhost:${ENVIRONMENT_CONFIG.PORT}/api-docs (not in production)`);
 });

@@ -178,4 +178,50 @@ export class AuthenticationService {
 
     await this.tokenRepository.revokeRefreshToken(rid);
   }
+
+  /**
+   * This method is for testing purposes only. It allows us to generate a token for a user without going through the login process.
+   *
+   * @param userId - The ID of the user for whom to generate the token
+   * @returns An object containing the generated access token and refresh token
+   */
+  async generateToken(userId: string): Promise<{ token: TokenResponseDto; refreshToken: string }> {
+    const user = await this.userRepository.getById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const now = new Date();
+
+    const token = await signJwt(
+      {
+        sub: String(user.id),
+        exp: Math.floor(now.getTime() / this.CONVERT_TO_SECONDS) + this.TOKEN_EXPIRY_SECONDS,
+      },
+      this.jwtAccessSecret,
+    );
+
+    const refreshId = crypto.randomUUID();
+    const refreshToken = await signJwt(
+      {
+        sub: String(user.id),
+        rid: refreshId,
+        exp: Math.floor(now.getTime() / this.CONVERT_TO_SECONDS) + this.REFRESH_EXPIRY_SECONDS,
+      },
+      this.jwtRefreshSecret,
+    );
+
+    await this.tokenRepository.saveRefreshToken(
+      String(user.id),
+      refreshId,
+      new Date(now.getTime()),
+      new Date(now.getTime() + this.REFRESH_EXPIRY_SECONDS * this.CONVERT_TO_SECONDS),
+    );
+
+    return {
+      token: { token } as TokenResponseDto,
+      refreshToken,
+    };
+  }
 }
