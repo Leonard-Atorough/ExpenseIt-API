@@ -1,3 +1,3 @@
-export type { ITokenRepository } from "./ITokenRepository";
-export type { IUserRepository } from "./IUserRepository";
-export type { ITransactionRepository } from "./ITransactionRepository";
+export type { ITokenRepository } from "./token.repository.interface";
+export type { IUserRepository } from "./user.repository.interface";
+export type { ITransactionRepository } from "./transaction.repository.interface";
