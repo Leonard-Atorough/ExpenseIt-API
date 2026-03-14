@@ -9,25 +9,6 @@ export class TransactionService {
   constructor(transactionRepository: ITransactionRepository) {
     this.transactionRepository = transactionRepository;
   }
-
-  async createTransaction(
-    transaction: CreateTransactionDto,
-    userId: string,
-  ): Promise<TransactionResponseDto> {
-    const newTransaction: Transaction = TransactionMapper.toDomain({
-      ...transaction,
-      userId,
-    });
-
-    const createdTransaction = await this.transactionRepository.save(newTransaction);
-
-    if (!createdTransaction) {
-      throw new Error("Failed to create transaction");
-    }
-
-    return TransactionMapper.toDto(createdTransaction) as TransactionResponseDto;
-  }
-
   async fetchTransactionById({
     id,
     userId,
@@ -51,6 +32,24 @@ export class TransactionService {
     );
   }
 
+  async createTransaction(
+    transaction: CreateTransactionDto,
+    userId: string,
+  ): Promise<TransactionResponseDto> {
+    const newTransaction: Transaction = TransactionMapper.toDomain({
+      ...transaction,
+      userId,
+    });
+
+    const createdTransaction = await this.transactionRepository.save(newTransaction);
+
+    if (!createdTransaction) {
+      throw new Error("Failed to create transaction");
+    }
+
+    return TransactionMapper.toDto(createdTransaction) as TransactionResponseDto;
+  }
+
   async updateTransaction(
     id: string,
     transaction: Partial<CreateTransactionDto>,
@@ -65,9 +64,10 @@ export class TransactionService {
     existingTransaction.update({
       amount: transaction.amount,
       type: transaction.type as TransactionType,
-      category: transaction.category && transaction.category !== "" 
-        ? existingTransaction.convertStringToCategory(transaction.category)
-        : undefined,
+      category:
+        transaction.category && transaction.category !== ""
+          ? existingTransaction.convertStringToCategory(transaction.category)
+          : undefined,
       description: transaction.description,
       date: transaction.transactionDate,
     });
