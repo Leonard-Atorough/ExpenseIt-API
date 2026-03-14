@@ -70,6 +70,13 @@ export class TimeoutError extends AppError {
   }
 }
 
+export class UnknownError extends AppError {
+  constructor(message: string = "An unknown error occurred") {
+    super(message, 500);
+    Object.setPrototypeOf(this, UnknownError.prototype);
+  }
+}
+
 export class PrismaError extends AppError {
   constructor(message: string, code: string) {
     super(message, code);
