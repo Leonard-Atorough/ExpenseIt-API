@@ -1,3 +1,3 @@
-export { TokenRepository } from "./tokenRepository";
-export { UserRepository } from "./userRepository";
+export { TokenRepository } from "./token.repository";
+export { UserRepository } from "./user.repository";
 export { TransactionRepository } from "./transaction.repository";
