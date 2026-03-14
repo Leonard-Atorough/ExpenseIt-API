@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import type { User } from "src/core/entities";
 import type { IUserRepository, ITokenRepository } from "../../core/interfaces";
 import type { AuthResponseDto, CreateUserDto, TokenResponseDto, UserResponseDto } from "../dtos";
-import { AuthenticationMapper } from "../mappers/authentication";
+import { AuthenticationMapper } from "../mappers/authentication.mapper";
 import { signJwt, verifyJwt } from "src/api/utils/jwtUtils";
 import { parseExpiryToMs } from "src/api/utils/timeUtils";
 import type { JwtPayload } from "jsonwebtoken";
@@ -186,7 +186,10 @@ export class AuthenticationService {
    * @param userId - The ID of the user for whom to generate the token
    * @returns An object containing the generated access token and refresh token
    */
-  async generateToken(userId: string, oldRefreshToken?: string): Promise<{ token: string; refreshToken: string }> {
+  async generateToken(
+    userId: string,
+    oldRefreshToken?: string,
+  ): Promise<{ token: string; refreshToken: string }> {
     const user = await this.userRepository.getById(userId);
 
     if (!user) {

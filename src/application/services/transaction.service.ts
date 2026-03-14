@@ -1,7 +1,7 @@
 import type { ITransactionRepository } from "src/core/interfaces";
 import type { CreateTransactionDto, TransactionResponseDto } from "../dtos";
 import type Transaction from "src/core/entities/transactionAggregate/transaction";
-import { TransactionMapper } from "../mappers/transaction";
+import { TransactionMapper } from "../mappers/transaction.mapper";
 import type { TransactionType } from "@src/core/entities/transactionAggregate/transactionType";
 
 export class TransactionService {

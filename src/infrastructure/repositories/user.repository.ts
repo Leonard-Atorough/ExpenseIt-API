@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { User } from "src/core/entities";
 import type { IUserRepository } from "src/core/interfaces";
-import { AuthenticationMapper } from "src/application/mappers/authentication";
+import { AuthenticationMapper } from "@src/application/mappers/authentication.mapper";
 
 export class UserRepository implements IUserRepository {
   client: PrismaClient;

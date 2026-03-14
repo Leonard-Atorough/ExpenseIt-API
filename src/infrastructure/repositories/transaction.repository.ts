@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { TransactionMapper } from "@src/application/mappers/transaction.mapper";
 import type { Transaction } from "@src/core/entities";
 import type { ITransactionRepository } from "@src/core/interfaces";
 
@@ -14,9 +15,15 @@ export class TransactionRepository implements ITransactionRepository {
   getByUserId(userId: string): Promise<Transaction[]> {
     throw new Error("Method not implemented.");
   }
-  save(transaction: Transaction): Promise<Transaction> {
-    throw new Error("Method not implemented.");
+
+  async save(transaction: Transaction): Promise<Transaction> {
+    const data = TransactionMapper.toPersistence(transaction);
+    const created = await this.client.transaction.create({
+      data,
+    });
+    return TransactionMapper.toDomain(created);
   }
+
   update(transaction: Transaction): Promise<Transaction> {
     throw new Error("Method not implemented.");
   }

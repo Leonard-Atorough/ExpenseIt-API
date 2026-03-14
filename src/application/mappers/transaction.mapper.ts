@@ -45,7 +45,7 @@ export class TransactionMapper {
     return {
       id: domain.id,
       amount: domain.amount,
-      type: domain.type.toString() as "income" | "expense",
+      type: domain.type?.toString() as "income" | "expense",
       category: domain.category.toString(),
       description: domain.description,
       transactionDate: domain.date,

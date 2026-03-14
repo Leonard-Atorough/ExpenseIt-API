@@ -91,4 +91,14 @@ export class TransactionController {
       next(err instanceof Error ? err : new Error("Unknown error"));
     }
   }
+
+  async updateTransaction(req: Request, res: Response, next: NextFunction) {
+    // Implementation for updating a transaction will go here
+    res.status(501).json({ message: "Not implemented" });
+  }
+
+  async deleteTransaction(req: Request, res: Response, next: NextFunction) {
+    // Implementation for deleting a transaction will go here
+    res.status(501).json({ message: "Not implemented" });
+  }
 }

@@ -1,6 +1,6 @@
 import type { UpdateUserDto, UpdateUserResponseDto, UserResponseDto } from "../dtos";
 import type { IUserRepository } from "src/core/interfaces";
-import { AuthenticationMapper } from "../mappers/authentication";
+import { AuthenticationMapper } from "../mappers/authentication.mapper";
 
 export class UserService {
   userRepository: IUserRepository;

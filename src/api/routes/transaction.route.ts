@@ -30,5 +30,17 @@ export default function createTransactionRouter(prisma: PrismaClient) {
     transactionController.createTransaction.bind(transactionController),
   );
 
+  transactionRouter.put(
+    "/:transactionId",
+    authenticationHandler,
+    transactionController.updateTransaction.bind(transactionController),
+  );
+
+  transactionRouter.delete(
+    "/:transactionId",
+    authenticationHandler,
+    transactionController.deleteTransaction.bind(transactionController),
+  );
+
   return transactionRouter as Router;
 }
