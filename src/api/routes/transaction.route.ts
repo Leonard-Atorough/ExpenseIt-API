@@ -4,6 +4,11 @@ import { authenticationHandler } from "../middleware";
 import type { PrismaClient } from "@prisma/client";
 import { TransactionService } from "@src/application/services";
 import { TransactionRepository } from "@src/infrastructure/repositories";
+import validationHandler from "../middleware/validation.middleware";
+import {
+  CreateTransactionSchema,
+  UpdateTransactionSchema,
+} from "@src/application/dtos/transaction";
 
 export default function createTransactionRouter(prisma: PrismaClient) {
   const transactionRouter = Router();
@@ -27,12 +32,14 @@ export default function createTransactionRouter(prisma: PrismaClient) {
   transactionRouter.post(
     "/create",
     authenticationHandler,
+    validationHandler(CreateTransactionSchema),
     transactionController.createTransaction.bind(transactionController),
   );
 
   transactionRouter.put(
     "/:transactionId",
     authenticationHandler,
+    validationHandler(UpdateTransactionSchema),
     transactionController.updateTransaction.bind(transactionController),
   );
 

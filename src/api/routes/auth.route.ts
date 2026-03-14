@@ -4,6 +4,12 @@ import type { PrismaClient } from "@prisma/client";
 import { AuthenticationService } from "@src/application/services/authentication.service";
 import { TokenRepository, UserRepository } from "@src/infrastructure/repositories";
 import { authenticationHandler } from "../middleware/auth.middleware";
+import validationHandler from "../middleware/validation.middleware";
+import {
+  CreateUserSchema,
+  LoginUserSchema,
+  RefreshTokenSchema,
+} from "@src/application/dtos/authentication";
 
 export default function createAuthRouter(prisma: PrismaClient) {
   const authRouter = Router();
@@ -18,11 +24,23 @@ export default function createAuthRouter(prisma: PrismaClient) {
     authenticationController.GetCurrentUser.bind(authenticationController),
   );
 
-  authRouter.post("/register", authenticationController.Register.bind(authenticationController));
+  authRouter.post(
+    "/register",
+    validationHandler(CreateUserSchema),
+    authenticationController.Register.bind(authenticationController),
+  );
 
-  authRouter.post("/refresh", authenticationController.Refresh.bind(authenticationController));
+  authRouter.post(
+    "/refresh",
+    validationHandler(RefreshTokenSchema),
+    authenticationController.Refresh.bind(authenticationController),
+  );
 
-  authRouter.post("/login", authenticationController.Login.bind(authenticationController));
+  authRouter.post(
+    "/login",
+    validationHandler(LoginUserSchema),
+    authenticationController.Login.bind(authenticationController),
+  );
 
   authRouter.post("/logout", authenticationController.Logout.bind(authenticationController));
 

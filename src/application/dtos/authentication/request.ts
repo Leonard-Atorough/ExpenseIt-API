@@ -1,24 +1,31 @@
-export interface CreateUserDto {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}
+import { z } from 'zod';
 
+export const CreateUserSchema = z.object({
+  email: z.email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+});
 
-export interface LoginUserDto {
-  email: string;
-  password: string;
-}
+export const LoginUserSchema = z.object({
+  email: z.email('Invalid email format'),
+  password: z.string().min(1, 'Password is required'),
+});
 
-export interface UpdateUserDto {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  profilePicture?: string;
-  profileName?: string;
-}
+export const UpdateUserSchema = z.object({
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  email: z.email().optional(),
+  profilePicture: z.string().optional(),
+  profileName: z.string().optional(),
+});
 
-export interface RefreshTokenDto {
-  token: string;
-}
+export const RefreshTokenSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+});
+
+// Inferred types for use throughout the app
+export type CreateUserDto = z.infer<typeof CreateUserSchema>;
+export type LoginUserDto = z.infer<typeof LoginUserSchema>;
+export type UpdateUserDto = z.infer<typeof UpdateUserSchema>;
+export type RefreshTokenDto = z.infer<typeof RefreshTokenSchema>;

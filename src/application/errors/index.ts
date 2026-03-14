@@ -19,6 +19,11 @@ export class ValidationError extends AppError {
     super(message, 400);
     Object.setPrototypeOf(this, ValidationError.prototype);
   }
+
+  static fromZodErrors(errors: any): ValidationError {
+    const message = errors.map((err: any) => `${err.path.join(".")}: ${err.message}`).join("; ");
+    return new ValidationError(message);
+  }
 }
 
 export class UnauthorizedError extends AppError {
