@@ -3,6 +3,7 @@ import type { CreateTransactionDto, TransactionResponseDto } from "../dtos";
 import type Transaction from "src/core/entities/transactionAggregate/transaction";
 import { TransactionMapper } from "../mappers/transaction.mapper";
 import type { TransactionType } from "@src/core/entities/transactionAggregate/transactionType";
+import { InternalServerError, NotFoundError } from "../errors";
 
 export class TransactionService {
   private transactionRepository: ITransactionRepository;
@@ -19,7 +20,7 @@ export class TransactionService {
     const transaction = await this.transactionRepository.getById(id, userId);
 
     if (!transaction) {
-      throw new Error("Transaction not found");
+      throw new NotFoundError("Transaction not found");
     }
     return TransactionMapper.toDto(transaction) as TransactionResponseDto;
   }
@@ -44,7 +45,7 @@ export class TransactionService {
     const createdTransaction = await this.transactionRepository.save(newTransaction);
 
     if (!createdTransaction) {
-      throw new Error("Failed to create transaction");
+      throw new InternalServerError("Failed to create transaction");
     }
 
     return TransactionMapper.toDto(createdTransaction) as TransactionResponseDto;
@@ -58,7 +59,7 @@ export class TransactionService {
     const existingTransaction = await this.transactionRepository.getById(id, userId);
 
     if (!existingTransaction) {
-      throw new Error("Transaction not found");
+      throw new NotFoundError("Transaction not found");
     }
 
     existingTransaction.update({
@@ -75,7 +76,7 @@ export class TransactionService {
     const savedTransaction = await this.transactionRepository.update(existingTransaction);
 
     if (!savedTransaction) {
-      throw new Error("Failed to update transaction");
+      throw new InternalServerError("Failed to update transaction");
     }
 
     return TransactionMapper.toDto(savedTransaction) as TransactionResponseDto;
@@ -85,7 +86,7 @@ export class TransactionService {
     const existingTransaction = await this.transactionRepository.getById(id, userId);
 
     if (!existingTransaction) {
-      throw new Error("Transaction not found");
+      throw new NotFoundError("Transaction not found");
     }
 
     await this.transactionRepository.delete(id);

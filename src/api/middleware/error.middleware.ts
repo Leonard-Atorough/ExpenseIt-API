@@ -3,11 +3,6 @@ import { ENVIRONMENT_CONFIG } from "@config";
 import type { AppError } from "src/application/errors";
 import type { ApiErrorResponse } from "@src/application/dtos/common/response.dto";
 
-export interface CustomError extends Error {
-  code?: number | string;
-  statusCode?: number;
-}
-
 function getHttpStatusCode(error: AppError): number {
   // If code is already a number, use it
   if (typeof error.code === "number") {

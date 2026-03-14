@@ -12,10 +12,6 @@ export default function createAuthRouter(prisma: PrismaClient) {
     new AuthenticationService(new UserRepository(prisma), new TokenRepository(prisma)),
   );
 
-  authRouter.get("/", (req, res) => {
-    res.status(200).json({ message: "Auth route is working" });
-  });
-
   authRouter.get(
     "/me",
     authenticationHandler,

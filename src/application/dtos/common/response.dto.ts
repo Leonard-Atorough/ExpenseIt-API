@@ -3,7 +3,6 @@ export interface ApiResponse<T> {
   code: number;
   data?: T;
   message?: string;
-  internal?: string;
 }
 
 export interface ApiErrorResponse<T = any> extends ApiResponse<T> {

@@ -7,6 +7,7 @@ import { signJwt, verifyJwt } from "src/api/utils/jwtUtils";
 import { parseExpiryToMs } from "src/api/utils/timeUtils";
 import type { JwtPayload } from "jsonwebtoken";
 import { ENVIRONMENT_CONFIG } from "@config";
+import { NotFoundError, UnauthorizedError } from "../errors";
 
 interface JwtPayloadWithRid extends JwtPayload {
   rid: string;
@@ -26,22 +27,19 @@ export class AuthenticationService {
   constructor(userRepository: IUserRepository, tokenRepository: ITokenRepository) {
     this.userRepository = userRepository;
     this.tokenRepository = tokenRepository;
-    if (!ENVIRONMENT_CONFIG.JWT_ACCESS_SECRET || !ENVIRONMENT_CONFIG.JWT_REFRESH_SECRET) {
-      throw new Error("JWT secrets are not defined in environment variables");
-    }
     this.jwtAccessSecret = ENVIRONMENT_CONFIG.JWT_ACCESS_SECRET;
     this.jwtRefreshSecret = ENVIRONMENT_CONFIG.JWT_REFRESH_SECRET;
   }
 
   async getCurrentUser(userId: string | undefined): Promise<UserResponseDto> {
     if (!userId) {
-      throw new Error("Unauthorized");
+      throw new UnauthorizedError();
     }
 
     const user = await this.userRepository.getById(userId);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundError("User not found");
     }
 
     return AuthenticationMapper.toDto(user);
@@ -64,12 +62,12 @@ export class AuthenticationService {
     const user = await this.userRepository.getByEmail(email);
 
     if (!user) {
-      throw new Error("Invalid email or password");
+      throw new UnauthorizedError("Invalid email or password");
     }
 
     const isPasswordValid = await user.account.verifyPassword(password);
     if (!isPasswordValid) {
-      throw new Error("Invalid email or password");
+      throw new UnauthorizedError("Invalid email or password");
     }
 
     const now = new Date();
@@ -115,7 +113,7 @@ export class AuthenticationService {
     const now = new Date();
 
     if (!payload || typeof payload === "string" || !("rid" in payload)) {
-      throw new Error("Invalid refresh token");
+      throw new UnauthorizedError("Invalid refresh token");
     }
 
     const { rid, sub } = payload as JwtPayloadWithRid;
@@ -123,15 +121,15 @@ export class AuthenticationService {
     const tokenRecord = await this.tokenRepository.findTokenRecordById(rid);
 
     if (!tokenRecord || tokenRecord.revokedAt) {
-      throw new Error("Invalid refresh token");
+      throw new UnauthorizedError("Invalid refresh token");
     }
 
     if (tokenRecord.userId !== sub) {
-      throw new Error("Invalid refresh token");
+      throw new UnauthorizedError("Invalid refresh token");
     }
 
     if (tokenRecord.expiresAt < now) {
-      throw new Error("Refresh token has expired");
+      throw new UnauthorizedError("Refresh token has expired");
     }
 
     await this.tokenRepository.revokeRefreshToken(rid);
@@ -173,7 +171,7 @@ export class AuthenticationService {
     const payload = await verifyJwt(rawRefresh, this.jwtRefreshSecret);
 
     if (!payload || typeof payload === "string" || !("rid" in payload)) {
-      throw new Error("Invalid refresh token");
+      throw new UnauthorizedError("Invalid refresh token");
     }
     const { rid } = payload as JwtPayloadWithRid;
 
@@ -193,7 +191,7 @@ export class AuthenticationService {
     const user = await this.userRepository.getById(userId);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundError("User not found");
     }
 
     const now = new Date();
@@ -209,7 +207,7 @@ export class AuthenticationService {
     if (oldRefreshToken) {
       const oldPayload = await verifyJwt(oldRefreshToken, this.jwtRefreshSecret);
       if (!oldPayload || typeof oldPayload === "string" || !("rid" in oldPayload)) {
-        throw new Error("Invalid old refresh token");
+        throw new UnauthorizedError("Invalid old refresh token");
       }
       const { rid } = oldPayload as JwtPayloadWithRid;
 
