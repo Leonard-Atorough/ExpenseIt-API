@@ -53,7 +53,7 @@ export class TransactionService {
 
   async updateTransaction(
     id: string,
-    transaction: CreateTransactionDto,
+    transaction: Partial<CreateTransactionDto>,
     userId: string,
   ): Promise<TransactionResponseDto> {
     const existingTransaction = await this.transactionRepository.getById(id, userId);
@@ -65,7 +65,9 @@ export class TransactionService {
     existingTransaction.update({
       amount: transaction.amount,
       type: transaction.type as TransactionType,
-      category: existingTransaction.convertStringToCategory(transaction.category),
+      category: transaction.category && transaction.category !== "" 
+        ? existingTransaction.convertStringToCategory(transaction.category)
+        : undefined,
       description: transaction.description,
       date: transaction.transactionDate,
     });

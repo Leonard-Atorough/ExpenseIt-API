@@ -5,7 +5,7 @@ import type {
   CreateTransactionDto,
   TransactionResponseDto,
 } from "src/application/dtos";
-import { NotFoundError, UnauthorizedError } from "@src/application/errors";
+import { NotFoundError, UnauthorizedError, UnknownError } from "@src/application/errors";
 
 export class TransactionController {
   transactionService: TransactionService;
@@ -94,11 +94,54 @@ export class TransactionController {
 
   async updateTransaction(req: Request, res: Response, next: NextFunction) {
     // Implementation for updating a transaction will go here
-    res.status(501).json({ message: "Not implemented" });
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedError();
+    }
+
+    try {
+      const transactionId = req.params.transactionId;
+      const transactionData = req.body as Partial<CreateTransactionDto>;
+
+      const result = await this.transactionService.updateTransaction(
+        transactionId,
+        transactionData,
+        userId,
+      );
+
+      const response: ApiResponse<{ transaction: TransactionResponseDto }> = {
+        ok: true,
+        code: 200,
+        message: "Transaction updated successfully",
+        data: { transaction: result },
+      };
+
+      res.status(200).json(response);
+    } catch (err) {
+      next(err instanceof Error ? err : new UnknownError());
+    }
   }
 
   async deleteTransaction(req: Request, res: Response, next: NextFunction) {
-    // Implementation for deleting a transaction will go here
-    res.status(501).json({ message: "Not implemented" });
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedError();
+    }
+
+    try {
+      const transactionId = req.params.transactionId;
+      await this.transactionService.deleteTransaction(transactionId, userId);
+
+      const response: ApiResponse<null> = {
+        ok: true,
+        code: 200,
+        message: "Transaction deleted successfully",
+        data: null,
+      };
+
+      res.status(200).json(response);
+    } catch (err) {
+      next(err instanceof Error ? err : new UnknownError());
+    }
   }
 }
