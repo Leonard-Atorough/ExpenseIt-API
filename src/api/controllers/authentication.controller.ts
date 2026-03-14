@@ -127,7 +127,7 @@ export class AuthenticationController {
     }
 
     try {
-      const { userId } = req.body as { userId: string };
+      const { userId, refreshToken } = req.body as { userId: string, refreshToken?: string };
       const tokenResult = await this.authenticationService.generateToken(userId);
       const response: ApiResponse<{ token: string, refreshToken: string }> = {
         ok: true,

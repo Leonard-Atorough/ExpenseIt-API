@@ -186,7 +186,7 @@ export class AuthenticationService {
    * @param userId - The ID of the user for whom to generate the token
    * @returns An object containing the generated access token and refresh token
    */
-  async generateToken(userId: string): Promise<{ token: string; refreshToken: string }> {
+  async generateToken(userId: string, oldRefreshToken?: string): Promise<{ token: string; refreshToken: string }> {
     const user = await this.userRepository.getById(userId);
 
     if (!user) {
@@ -202,6 +202,16 @@ export class AuthenticationService {
       },
       this.jwtAccessSecret,
     );
+
+    if (oldRefreshToken) {
+      const oldPayload = await verifyJwt(oldRefreshToken, this.jwtRefreshSecret);
+      if (!oldPayload || typeof oldPayload === "string" || !("rid" in oldPayload)) {
+        throw new Error("Invalid old refresh token");
+      }
+      const { rid } = oldPayload as JwtPayloadWithRid;
+
+      await this.tokenRepository.revokeRefreshToken(rid);
+    }
 
     const refreshId = randomUUID();
     const refreshToken = await signJwt(

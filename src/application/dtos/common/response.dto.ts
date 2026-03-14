@@ -6,13 +6,6 @@ export interface ApiResponse<T> {
   internal?: string;
 }
 
-export interface ApiErrorResponse {
-  ok: boolean;
-  code: number;
-  message: string;
-  internal?: string;
-}
-
 export interface ApiErrorResponse<T = any> extends ApiResponse<T> {
   stack?: string;
 }

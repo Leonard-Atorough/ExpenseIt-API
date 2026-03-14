@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { ENVIRONMENT_CONFIG } from "@config";
 import type { AppError } from "src/application/errors";
-import type { ApiErrorResponse } from "@src/application/dtos/common/apiResponse";
+import type { ApiErrorResponse } from "@src/application/dtos/common/response.dto";
 
 export interface CustomError extends Error {
   code?: number | string;

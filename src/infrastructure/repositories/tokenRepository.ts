@@ -16,19 +16,17 @@ export class TokenRepository implements ITokenRepository {
     ip?: string,
     userAgent?: string,
   ): Promise<void> {
-    await this.client.refreshToken.upsert({
+    // Delete any existing token for this user (unique constraint allows only one per user)
+    await this.client.refreshToken.deleteMany({
       where: { userId },
-      create: {
+    });
+
+    // Create the new refresh token
+    await this.client.refreshToken.create({
+      data: {
         id: refreshTokenId,
         userId,
         createdAt,
-        expiresAt,
-        ip: ip ?? null,
-        userAgent: userAgent ?? null,
-        revokedAt: null,
-      },
-      update: {
-        id: refreshTokenId,
         expiresAt,
         ip: ip ?? null,
         userAgent: userAgent ?? null,
@@ -46,9 +44,7 @@ export class TokenRepository implements ITokenRepository {
     });
   }
 
-  async findTokenRecordById(
-    refreshTokenId: string,
-  ): Promise<{
+  async findTokenRecordById(refreshTokenId: string): Promise<{
     userId: string;
     rid: string;
     createdAt: Date;

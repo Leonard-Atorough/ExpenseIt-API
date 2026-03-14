@@ -1,1 +1,1 @@
-export type { ApiResponse, ApiErrorResponse } from "./apiResponse";
+export type { ApiResponse, ApiErrorResponse } from "./response.dto";

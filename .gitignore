@@ -39,3 +39,4 @@ Thumbs.db
 # Ignore internal and script files
 .internal
 scripts/
+response.json
