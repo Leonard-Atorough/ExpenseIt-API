@@ -35,7 +35,7 @@ export class AuthenticationController {
 
   async Register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = req.body as unknown as CreateUserDto;
+      const user = req.body as CreateUserDto;
 
       const newUser = await this.authenticationService.register(user);
 
@@ -54,7 +54,7 @@ export class AuthenticationController {
 
   async Login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, password } = req.body as unknown as LoginUserDto;
+      const { email, password } = req.body as LoginUserDto;
 
       // In a future enhancement, we could log the IP address and user agent for security monitoring and anomaly detection.
       const ip = req.ip;
@@ -127,9 +127,9 @@ export class AuthenticationController {
     }
 
     try {
-      const { userId, refreshToken } = req.body as { userId: string, refreshToken?: string };
+      const { userId, refreshToken } = req.body as { userId: string; refreshToken?: string };
       const tokenResult = await this.authenticationService.generateToken(userId);
-      const response: ApiResponse<{ token: string, refreshToken: string }> = {
+      const response: ApiResponse<{ token: string; refreshToken: string }> = {
         ok: true,
         code: 200,
         data: tokenResult,

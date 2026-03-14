@@ -25,7 +25,8 @@ info:
     {
       "ok": false,
       "code": 401,
-      "message": "Unauthorized"
+      "message": "Human-readable error message describing what went wrong",
+      "stack": "Optional stack trace for debugging (only in non-production environments)"
     }
     ```
 
@@ -47,7 +48,7 @@ info:
     name: Leonard Atorough
 
 servers:
-  - url: http://localhost:3001
+  - url: http://localhost:4000
     description: Local development server
 
 tags:
@@ -65,7 +66,6 @@ tags:
 # ─────────────────────────────────────────────────────────────────────────────
 
 paths:
-
   # ── Health ─────────────────────────────────────────────────────────────────
 
   /ping:
@@ -89,23 +89,6 @@ paths:
                     example: "Welcome to the ExpenseIt-API"
 
   # ── Authentication ─────────────────────────────────────────────────────────
-
-  /api/auth:
-    get:
-      tags: [Authentication]
-      summary: Auth route health check
-      operationId: authHealth
-      responses:
-        "200":
-          description: Auth route is working
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Auth route is working"
 
   /api/auth/register:
     post:
@@ -429,7 +412,6 @@ paths:
 # ─────────────────────────────────────────────────────────────────────────────
 
 components:
-
   # ── Security Schemes ────────────────────────────────────────────────────────
 
   securitySchemes:
@@ -491,7 +473,6 @@ components:
   # ── Schemas ─────────────────────────────────────────────────────────────────
 
   schemas:
-
     # ── Request Bodies ──────────────────────────────────────────────────────
 
     CreateUserRequest:
