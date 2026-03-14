@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { User } from "src/core/entities";
 import type { IUserRepository, ITokenRepository } from "../../core/interfaces";
 import type { AuthResponseDto, CreateUserDto, TokenResponseDto, UserResponseDto } from "../dtos";
@@ -81,7 +82,7 @@ export class AuthenticationService {
       this.jwtAccessSecret,
     );
 
-    const refreshId = crypto.randomUUID();
+    const refreshId = randomUUID();
     const refreshToken = await signJwt(
       {
         sub: String(user.id),
@@ -143,7 +144,7 @@ export class AuthenticationService {
       this.jwtAccessSecret,
     );
 
-    const newRefreshId = crypto.randomUUID();
+    const newRefreshId = randomUUID();
 
     const newRefreshToken = await signJwt(
       {
@@ -185,7 +186,7 @@ export class AuthenticationService {
    * @param userId - The ID of the user for whom to generate the token
    * @returns An object containing the generated access token and refresh token
    */
-  async generateToken(userId: string): Promise<{ token: TokenResponseDto; refreshToken: string }> {
+  async generateToken(userId: string): Promise<{ token: string; refreshToken: string }> {
     const user = await this.userRepository.getById(userId);
 
     if (!user) {
@@ -202,7 +203,7 @@ export class AuthenticationService {
       this.jwtAccessSecret,
     );
 
-    const refreshId = crypto.randomUUID();
+    const refreshId = randomUUID();
     const refreshToken = await signJwt(
       {
         sub: String(user.id),
@@ -220,7 +221,7 @@ export class AuthenticationService {
     );
 
     return {
-      token: { token } as TokenResponseDto,
+      token: token,
       refreshToken,
     };
   }

@@ -81,12 +81,12 @@ export class TransactionController {
         message: "Transaction created successfully",
         data: { transaction: result },
       };
-      res.status(201);
+
       if (result.id) {
         // Set Location header to the URL of the newly created transaction so the client can easily access it and follow RESTful conventions
         res.setHeader("Location", `/transactions/${result.id}`);
       }
-      res.json(response);
+      res.status(201).json(response);
     } catch (err) {
       next(err instanceof Error ? err : new Error("Unknown error"));
     }

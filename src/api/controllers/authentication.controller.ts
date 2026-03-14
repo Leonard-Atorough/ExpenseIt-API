@@ -129,10 +129,10 @@ export class AuthenticationController {
     try {
       const { userId } = req.body as { userId: string };
       const tokenResult = await this.authenticationService.generateToken(userId);
-      const response: ApiResponse<TokenResponseDto> = {
+      const response: ApiResponse<{ token: string, refreshToken: string }> = {
         ok: true,
         code: 200,
-        data: tokenResult.token,
+        data: tokenResult,
       };
       res.status(200).json(response);
     } catch (err) {

@@ -70,9 +70,7 @@ export class TransactionService {
       date: transaction.transactionDate,
     });
 
-    const savedTransaction = await this.transactionRepository.update(
-      TransactionMapper.toDomain(existingTransaction),
-    );
+    const savedTransaction = await this.transactionRepository.update(existingTransaction);
 
     if (!savedTransaction) {
       throw new Error("Failed to update transaction");
