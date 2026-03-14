@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 function loadEnvironmentConfig(): EnvironmentConfig {
-  function isRequiredEnv(key: string, defaultValue?: string): string {
+    function isRequiredEnv(key: string, defaultValue?: string): string {
     const value = process.env[key];
     if (!value) {
       // Allow defaults in non-production environments (dev, test, staging)
