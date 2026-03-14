@@ -1,6 +1,7 @@
 import type { UpdateUserDto, UpdateUserResponseDto, UserResponseDto } from "../dtos";
 import type { IUserRepository } from "src/core/interfaces";
 import { AuthenticationMapper } from "../mappers/authentication.mapper";
+import { NotFoundError } from "../errors";
 
 export class UserService {
   userRepository: IUserRepository;
@@ -12,7 +13,7 @@ export class UserService {
     const existingUser = await this.userRepository.getById(id);
 
     if (!existingUser) {
-      throw new Error("User not found");
+      throw new NotFoundError("User not found");
     }
 
     existingUser.update({
@@ -22,16 +23,23 @@ export class UserService {
 
     const savedUser = await this.userRepository.save(AuthenticationMapper.toDomain(existingUser));
 
-    if (!savedUser) {
-      throw new Error("Failed to update user");
-    }
-
     return AuthenticationMapper.toDto(savedUser);
   }
   async GetUserById(id: string): Promise<UserResponseDto | null> {
-    throw new Error("Method not implemented.");
+    const user = await this.userRepository.getById(id);
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+    return AuthenticationMapper.toDto(user);
   }
   async GetUserByEmail(email: string): Promise<UserResponseDto | null> {
-    throw new Error("Method not implemented.");
+    const user = await this.userRepository.getByEmail(email);
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    return AuthenticationMapper.toDto(user);
   }
 }
