@@ -26,6 +26,9 @@ jobs:
         run: npm install
 
       - name: Run tests
+        env:
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
         run: npm run test
 
   deploy:
@@ -46,4 +49,7 @@ jobs:
         run: npm install
 
       - name: Deploy to Production
+        env:
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
         run: echo "Deploying to production..." # Replace with actual deployment commands

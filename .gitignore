@@ -40,3 +40,4 @@ Thumbs.db
 .internal
 scripts/
 response.json
+PIPELINE_TARGET_STATE.yml
