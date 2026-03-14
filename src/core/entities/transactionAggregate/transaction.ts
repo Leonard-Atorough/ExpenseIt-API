@@ -9,6 +9,7 @@ export default class Transaction extends BaseEntity {
   category: Category;
   description: string;
   date: Date;
+  // future fields: location, payment method, tags, currency (which we can split as: baseCurrency and submittedCurrency), etc.
 
   private constructor(
     id: string | undefined,
