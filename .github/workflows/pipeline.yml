@@ -29,6 +29,7 @@ jobs:
         env:
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
         run: npm run test
 
   deploy:
@@ -52,4 +53,5 @@ jobs:
         env:
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
         run: echo "Deploying to production..." # Replace with actual deployment commands
