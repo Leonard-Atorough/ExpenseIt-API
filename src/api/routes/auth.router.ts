@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AuthenticationController } from "../controllers";
 import type { PrismaClient } from "@prisma/client";
-import { AuthenticationService } from "@src/application/services/authenticationService";
+import { AuthenticationService } from "@src/application/services/authentication.service";
 import { TokenRepository, UserRepository } from "@src/infrastructure/repositories";
 import { authenticationHandler } from "../middleware/auth.middleware";
 

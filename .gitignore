@@ -36,5 +36,6 @@ Thumbs.db
 .env.production.local
 /generated/prisma
 
-# Ignore internal files
+# Ignore internal and script files
 .internal
+scripts/

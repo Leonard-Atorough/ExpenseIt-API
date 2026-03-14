@@ -41,7 +41,7 @@ export function createApp(): ApplicationWithSwagger {
       origin: ENVIRONMENT_CONFIG.CLIENT_ORIGIN,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "User-Agent", "X-Forwarded-For"],
+      allowedHeaders: ["Content-Type", "Authorization", "User-Agent", "X-Forwarded-For", "X-Test-Token"],
     }),
   );
   app.use(express.json({ strict: false }));

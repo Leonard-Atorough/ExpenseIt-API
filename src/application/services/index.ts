@@ -1,3 +1,3 @@
-export { AuthenticationService } from "./authenticationService";
-export { TransactionService } from "./transactionService";
-export { UserService } from "./userService";
+export { AuthenticationService } from "./authentication.service";
+export { TransactionService } from "./transaction.service";
+export { UserService } from "./user.service";

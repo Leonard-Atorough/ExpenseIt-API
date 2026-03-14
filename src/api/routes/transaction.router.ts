@@ -8,7 +8,9 @@ import { TransactionRepository } from "@src/infrastructure/repositories";
 export default function createTransactionRouter(prisma: PrismaClient) {
   const transactionRouter = Router();
 
-  const transactionController = new TransactionController(new TransactionService(new TransactionRepository(prisma)));
+  const transactionController = new TransactionController(
+    new TransactionService(new TransactionRepository(prisma)),
+  );
 
   transactionRouter.get(
     "/",
@@ -23,7 +25,7 @@ export default function createTransactionRouter(prisma: PrismaClient) {
   );
 
   transactionRouter.post(
-    "/",
+    "/create",
     authenticationHandler,
     transactionController.createTransaction.bind(transactionController),
   );
