@@ -1,8 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyJwt } from "../utils/jwtUtils";
 import { ENVIRONMENT_CONFIG } from "@config";
+import { logger } from "@src/api/middleware/index.js";
 
-export async function authenticationHandler(req: Request, res: Response, next: NextFunction) {
+export default async function authenticationHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   try {
     const authHeader = req.headers["authorization"];
     if (!authHeader || typeof authHeader !== "string") {
@@ -18,7 +23,7 @@ export async function authenticationHandler(req: Request, res: Response, next: N
     const jwtSecret = ENVIRONMENT_CONFIG.JWT_ACCESS_SECRET;
 
     if (!jwtSecret) {
-      console.error("JWT_ACCESS_SECRET is not defined in environment variables");
+      logger.error("JWT_ACCESS_SECRET is not defined in environment variables");
       return res.status(500).json({ error: "Internal Server Error: JWT secret not configured" });
     }
     const payload = await verifyJwt(token, jwtSecret);
@@ -30,6 +35,7 @@ export async function authenticationHandler(req: Request, res: Response, next: N
     req.user = payload;
     next();
   } catch (err) {
+    logger.error("Unauthorized: Invalid or expired token", { error: err });
     return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
   }
 }

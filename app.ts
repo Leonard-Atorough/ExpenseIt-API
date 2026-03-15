@@ -10,6 +10,7 @@ import yaml from "js-yaml";
 import { createPrismaClient } from "./src/infrastructure/config/prisma";
 import { createAuthRouter, createTransactionRouter, createUserRouter } from "./src/api/routes";
 import errorHandler from "./src/api/middleware/error.middleware";
+import { loggingHandler } from "@src/api/middleware/index.js";
 
 interface ApplicationWithSwagger extends Application {
   useSwaggerDocumentation: () => void;
@@ -28,7 +29,6 @@ export function createApp(): ApplicationWithSwagger {
   const prismaClient = createPrismaClient();
 
   const app: ApplicationWithSwagger = express() as unknown as ApplicationWithSwagger;
-  // What we need: cors, cookie parser, json parsing, prisma, routers, error handling, swagger documentation
 
   app.useSwaggerDocumentation = () => {
     if (ENVIRONMENT_CONFIG.NODE_ENV !== "production") {
@@ -41,12 +41,19 @@ export function createApp(): ApplicationWithSwagger {
       origin: ENVIRONMENT_CONFIG.CLIENT_ORIGIN,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "User-Agent", "X-Forwarded-For", "X-Test-Token"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "User-Agent",
+        "X-Forwarded-For",
+        "X-Test-Token",
+      ],
     }),
   );
   app.use(express.json({ strict: false }));
   app.use(cookieParser());
   app.useSwaggerDocumentation();
+  app.use(loggingHandler);
 
   app.get("/healthcheck", (_req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });

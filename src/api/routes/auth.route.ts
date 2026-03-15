@@ -3,8 +3,7 @@ import { AuthenticationController } from "../controllers";
 import type { PrismaClient } from "@prisma/client";
 import { AuthenticationService } from "@src/application/services/authentication.service";
 import { TokenRepository, UserRepository } from "@src/infrastructure/repositories";
-import { authenticationHandler } from "../middleware/auth.middleware";
-import validationHandler from "../middleware/validation.middleware";
+import { authenticationHandler, validationHandler } from "../middleware/index.js";
 import {
   CreateUserSchema,
   LoginUserSchema,

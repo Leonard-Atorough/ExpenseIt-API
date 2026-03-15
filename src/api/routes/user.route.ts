@@ -1,8 +1,7 @@
 import { Router } from "express";
 import { userController } from "../../controllers/userController.ts";
-import { authenticationHandler } from "../middleware/auth.middleware.ts";
 import type { PrismaClient } from "@prisma/client";
-import validationHandler from "../middleware/validation.middleware.ts";
+import { validationHandler, authenticationHandler } from "../middleware/index.js";
 import { UpdateUserSchema } from "@src/application/dtos/authentication";
 
 export default function createUserRouter(prisma: PrismaClient) {

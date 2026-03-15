@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import { ENVIRONMENT_CONFIG } from "@config";
-import type { AppError } from "src/application/errors";
-import type { ApiErrorResponse } from "@src/application/dtos/common/response.dto";
+import type { AppError } from "src/application/errors/index.js";
+import type { ApiErrorResponse } from "@src/application/dtos/common/index.js";
+import { logger } from "@src/api/middleware/index.js";
 
 function getHttpStatusCode(error: AppError): number {
   // If code is already a number, use it
@@ -31,7 +32,7 @@ export default function errorHandler(
   res: Response,
   next: NextFunction,
 ) {
-  console.log("Middleware handling error:", err.code, err.message);
+  logger.error("Middleware handling error:", { code: err.code, message: err.message });
   const errorStatus = getHttpStatusCode(err);
   const errorMessage = err.message || "Internal Server Error";
   res.status(errorStatus).json({

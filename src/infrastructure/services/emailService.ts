@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import type { PrismaClient } from "@prisma/client";
 import { ENVIRONMENT_CONFIG } from "@config";
+import { logger } from "@src/api/middleware/index.js";
 
 export function emailService(prisma: PrismaClient) {
   const transporter = nodemailer.createTransport({
@@ -14,7 +15,7 @@ export function emailService(prisma: PrismaClient) {
 
   async function sendVerificationEmail(email: string, token: string): Promise<void> {
     // Implementation to send email
-    console.log(`Sending verification email to ${email} with token ${token}`);
+    logger.info(`Sending verification email to ${email} with token ${token}`);
     const verificationLink = `https://localhost:3001/auth/verify?token=${token}`;
     const mailOptions = {
       from: ENVIRONMENT_CONFIG.EMAIL_USERNAME,
@@ -25,9 +26,9 @@ export function emailService(prisma: PrismaClient) {
 
     try {
       await transporter.sendMail(mailOptions);
-      console.log(`Verification email sent to ${email}`);
+      logger.info(`Verification email sent to ${email}`);
     } catch (error) {
-      console.error(`Failed to send verification email to ${email}`, error);
+      logger.error(`Failed to send verification email to ${email}`, { error });
       throw error;
     }
   }

@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { TransactionController } from "../controllers";
-import { authenticationHandler } from "../middleware";
+import { authenticationHandler, validationHandler } from "../middleware/index.js";
 import type { PrismaClient } from "@prisma/client";
 import { TransactionService } from "@src/application/services";
 import { TransactionRepository } from "@src/infrastructure/repositories";
-import validationHandler from "../middleware/validation.middleware";
 import {
   CreateTransactionSchema,
   UpdateTransactionSchema,
