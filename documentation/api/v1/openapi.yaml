@@ -236,6 +236,67 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+    /api/auth/token:
+      post:
+        tags: [Authentication]
+        summary: Generate a test access token (development only)
+        operationId: generateToken
+        description: |
+          Generates an access token and optional refresh token for a given
+          `userId`. This endpoint is intended for development and testing
+          only. It checks the `x-test-token` header value against the
+          `TEST_TOKEN` environment variable when set and will return
+          `403` if the header is missing or invalid.
+        parameters:
+          - name: x-test-token
+            in: header
+            required: false
+            description: Test token header used to protect this endpoint in non-production environments
+            schema:
+              type: string
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId]
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                    example: "c1d2e3f4-a5b6-7890-abcd-ef1234567890"
+                  refreshToken:
+                    type: string
+                    example: "optional-refresh-token"
+        responses:
+          "200":
+            description: Test token generated successfully
+            content:
+              application/json:
+                schema:
+                  allOf:
+                    - $ref: "#/components/schemas/ApiResponse"
+                    - type: object
+                      properties:
+                        data:
+                          type: object
+                          properties:
+                            token:
+                              type: string
+                              example: "eyJhbGciOi..."
+                            refreshToken:
+                              type: string
+                              example: "refresh-token-value"
+          "403":
+            description: Forbidden - invalid or missing test token header
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/ApiErrorResponse"
+          "500":
+            $ref: "#/components/responses/InternalServerError"
+
   /api/auth/me:
     get:
       tags: [Authentication]
@@ -343,7 +404,7 @@ paths:
 
   # ── Users ───────────────────────────────────────────────────────────────────
 
-  /api/users/profile:
+  /api/profile:
     get:
       tags: [Users]
       summary: Get the authenticated user's profile

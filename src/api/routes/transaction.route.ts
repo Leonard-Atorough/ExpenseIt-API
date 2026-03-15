@@ -33,7 +33,7 @@ export default function createTransactionRouter(prisma: PrismaClient) {
   );
 
   transactionRouter.post(
-    "/create",
+    "/",
     authenticationHandler,
     validationHandler(CreateTransactionSchema),
     transactionController.createTransaction.bind(transactionController),
