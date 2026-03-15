@@ -11,6 +11,8 @@ import { createPrismaClient } from "./src/infrastructure/config/prisma";
 import { createAuthRouter, createTransactionRouter, createUserRouter } from "./src/api/routes";
 import errorHandler from "./src/api/middleware/error.middleware";
 import { loggingHandler } from "@src/api/middleware/index.js";
+import { healthcheckProvider } from "@src/infrastructure/healthchecks/healthcheckProvider";
+import helmet from "helmet";
 
 interface ApplicationWithSwagger extends Application {
   useSwaggerDocumentation: () => void;
@@ -37,6 +39,22 @@ export function createApp(): ApplicationWithSwagger {
   };
 
   app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          scriptSrc: [
+            "'self'",
+            "https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.15.5/swagger-ui-bundle.js",
+          ],
+          styleSrc: [
+            "'self'",
+            "https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.15.5/swagger-ui.css",
+          ],
+        },
+      },
+    }),
+  );
+  app.use(
     cors({
       origin: ENVIRONMENT_CONFIG.CLIENT_ORIGIN,
       credentials: true,
@@ -56,7 +74,9 @@ export function createApp(): ApplicationWithSwagger {
   app.use(loggingHandler);
 
   app.get("/healthcheck", (_req, res) => {
-    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+    // Get the current health status from the provider
+    const healthStatus = healthcheckProvider.getHealthStatus();
+    res.json(healthStatus);
   });
 
   app.get("/ping", (_req, res) => {
