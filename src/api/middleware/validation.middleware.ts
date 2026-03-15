@@ -9,7 +9,7 @@ export default function validationHandler(schema: ZodObject<any>) {
       if (!result.success) {
         return next(ValidationError.fromZodErrors(result.error));
       }
-      req.body = result.data.body;
+      req.body = result.data;
       next();
     } catch (err) {
       next(err);
