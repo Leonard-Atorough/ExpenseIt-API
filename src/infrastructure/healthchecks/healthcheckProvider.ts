@@ -10,7 +10,7 @@ export interface CheckResult {
   message?: string;
 }
 
-export default class HealthcheckProvider {
+class HealthcheckProvider {
   private checks: Map<string, () => Promise<CheckResult>>;
   private currentStatus: HealthStatus;
   private intervalMs: number;
@@ -20,10 +20,19 @@ export default class HealthcheckProvider {
 
   private statusHistory: HealthStatus[] = [];
 
-  constructor(intervalMs: number = 30000) {
+  public static instance: HealthcheckProvider;
+
+  private constructor(intervalMs: number = 30000) {
     this.checks = new Map<string, () => Promise<CheckResult>>();
     this.currentStatus = { status: "healthy", timestamp: new Date().toISOString(), details: {} };
     this.intervalMs = intervalMs;
+  }
+
+  public static getInstance(intervalMs: number = 30000): HealthcheckProvider {
+    if (!HealthcheckProvider.instance) {
+      HealthcheckProvider.instance = new HealthcheckProvider(intervalMs);
+    }
+    return HealthcheckProvider.instance;
   }
 
   withTimeout = (promise: Promise<CheckResult>, ms: number) =>
@@ -100,3 +109,11 @@ export default class HealthcheckProvider {
     }
   }
 }
+
+export type HealthcheckProviderType = ReturnType<typeof HealthcheckProvider.getInstance>;
+
+// Start health checks when the provider is initialized
+const healthcheckProvider = HealthcheckProvider.getInstance();
+healthcheckProvider.startHealthChecks();
+
+export { healthcheckProvider };
