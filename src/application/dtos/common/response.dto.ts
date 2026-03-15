@@ -5,6 +5,6 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface ApiErrorResponse<T = any> extends ApiResponse<T> {
+export interface ApiErrorResponse<T> extends ApiResponse<T> {
   stack?: string;
 }
