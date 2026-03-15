@@ -17,7 +17,7 @@ export default function createAuthRouter(prisma: PrismaClient) {
     new AuthenticationService(new UserRepository(prisma), new TokenRepository(prisma)),
   );
 
-  const rateLimit = rateHandler(10, 15 * 60 * 1000);
+  const rateLimit = rateHandler(100, 15 * 60 * 1000);
 
   authRouter.use(rateLimit);
 
