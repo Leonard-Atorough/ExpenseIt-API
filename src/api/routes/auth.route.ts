@@ -3,7 +3,7 @@ import { AuthenticationController } from "../controllers";
 import type { PrismaClient } from "@prisma/client";
 import { AuthenticationService } from "@src/application/services/authentication.service";
 import { TokenRepository, UserRepository } from "@src/infrastructure/repositories";
-import { authenticationHandler, validationHandler } from "../middleware/index.js";
+import { authenticationHandler, rateHandler, validationHandler } from "../middleware/index.js";
 import {
   CreateUserSchema,
   LoginUserSchema,
@@ -16,6 +16,10 @@ export default function createAuthRouter(prisma: PrismaClient) {
   const authenticationController = new AuthenticationController(
     new AuthenticationService(new UserRepository(prisma), new TokenRepository(prisma)),
   );
+
+  const rateLimit = rateHandler(10, 15 * 60 * 1000);
+
+  authRouter.use(rateLimit);
 
   authRouter.get(
     "/me",

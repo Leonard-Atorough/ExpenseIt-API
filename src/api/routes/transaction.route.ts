@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { TransactionController } from "../controllers";
-import { authenticationHandler, validationHandler } from "../middleware/index.js";
+import { authenticationHandler, rateHandler, validationHandler } from "../middleware/index.js";
 import type { PrismaClient } from "@prisma/client";
 import { TransactionService } from "@src/application/services";
 import { TransactionRepository } from "@src/infrastructure/repositories";
@@ -15,6 +15,10 @@ export default function createTransactionRouter(prisma: PrismaClient) {
   const transactionController = new TransactionController(
     new TransactionService(new TransactionRepository(prisma)),
   );
+
+  const rateLimit = rateHandler(50, 15 * 60 * 1000);
+
+  transactionRouter.use(rateLimit);
 
   transactionRouter.get(
     "/",
