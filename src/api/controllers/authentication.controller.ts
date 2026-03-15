@@ -11,6 +11,7 @@ import type { NextFunction, Request, Response } from "express";
 import { REFRESH_TOKEN_COOKIE_OPTIONS } from "../config";
 import { ENVIRONMENT_CONFIG } from "@config";
 import { ForbiddenError } from "@src/application/errors";
+import { logger } from "../middleware/index.js";
 
 export class AuthenticationController {
   private authenticationService: AuthenticationService;
@@ -59,6 +60,7 @@ export class AuthenticationController {
       // In a future enhancement, we could log the IP address and user agent for security monitoring and anomaly detection.
       const ip = req.ip;
       const userAgent = req.get("User-Agent") ?? "";
+      logger.info(`Login attempt for email: ${email} from IP: ${ip} with user agent: ${userAgent}`);
 
       const authResult = await this.authenticationService.login(email, password);
       const response: ApiResponse<AuthResponseDto> = {
