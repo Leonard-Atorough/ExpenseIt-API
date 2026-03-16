@@ -21,7 +21,7 @@ export class ValidationError extends AppError {
   }
 
   static fromZodErrors(errors: any): ValidationError {
-    const message = errors.map((err: any) => `${err.path.join(".")}: ${err.message}`).join("; ");
+    const message = errors;
     return new ValidationError(message);
   }
 }

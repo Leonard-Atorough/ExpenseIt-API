@@ -9,7 +9,7 @@ export class TransactionMapper {
       type: raw.type,
       category: raw.category,
       description: raw.description,
-      date: raw.transactionDate,
+      date: raw.date,
     });
   }
 
@@ -48,7 +48,7 @@ export class TransactionMapper {
       type: domain.type?.toString() as "income" | "expense",
       category: domain.category.toString(),
       description: domain.description,
-      transactionDate: domain.date,
+      date: domain.date,
     };
   }
 }

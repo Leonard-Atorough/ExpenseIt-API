@@ -80,6 +80,8 @@ export class AuthenticationController {
     try {
       const rawRefresh = req.cookies.refreshToken as string;
 
+      logger.info(`Refresh token attempt with refresh token: ${rawRefresh}`);
+
       const refreshResult = await this.authenticationService.refresh({ rawRefresh });
 
       const response: ApiResponse<TokenResponseDto> = {

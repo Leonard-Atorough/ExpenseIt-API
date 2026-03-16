@@ -597,7 +597,7 @@ components:
 
     CreateTransactionRequest:
       type: object
-      required: [amount, type, category, description, transactionDate]
+      required: [amount, type, category, description, date]
       description: Payload for recording a new financial transaction
       properties:
         amount:
@@ -615,7 +615,7 @@ components:
         description:
           type: string
           example: "Weekly grocery run"
-        transactionDate:
+        date:
           type: string
           format: date-time
           example: "2026-03-01T10:00:00.000Z"
@@ -694,7 +694,7 @@ components:
         description:
           type: string
           example: "Weekly grocery run"
-        transactionDate:
+        date:
           type: string
           format: date-time
           example: "2026-03-01T10:00:00.000Z"
@@ -818,7 +818,7 @@ components:
             type: "expense"
             category: "Groceries"
             description: "Weekly grocery run"
-            transactionDate: "2026-03-01T10:00:00.000Z"
+            date: "2026-03-01T10:00:00.000Z"
 
     TransactionListApiResponse:
       allOf:
@@ -843,7 +843,7 @@ components:
               type: "expense"
               category: "Groceries"
               description: "Weekly grocery run"
-              transactionDate: "2026-03-01T10:00:00.000Z"
+              date: "2026-03-01T10:00:00.000Z"
 
     EmptyApiResponse:
       allOf:

@@ -70,7 +70,7 @@ export class TransactionService {
           ? existingTransaction.convertStringToCategory(transaction.category)
           : undefined,
       description: transaction.description,
-      date: transaction.transactionDate,
+      date: transaction.date,
     });
 
     const savedTransaction = await this.transactionRepository.update(existingTransaction);

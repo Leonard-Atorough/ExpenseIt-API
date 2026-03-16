@@ -22,11 +22,11 @@ export class TransactionController {
     try {
       const transactions = await this.transactionService.fetchTransactions({ userId });
 
-      const response: ApiResponse<{ transactions: TransactionResponseDto[] }> = {
+      const response: ApiResponse<TransactionResponseDto[]> = {
         ok: true,
         code: 200,
         message: "Transactions fetched successfully",
-        data: { transactions },
+        data: transactions ,
       };
 
       return res.status(200).json(response);

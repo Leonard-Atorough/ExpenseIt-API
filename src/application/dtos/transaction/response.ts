@@ -4,7 +4,7 @@ export interface TransactionResponseDto {
   type: "income" | "expense";
   category: string;
   description: string;
-  transactionDate: Date;
+  date: Date;
 }
 
 export type UpdateTransactionResponseDto = TransactionResponseDto;

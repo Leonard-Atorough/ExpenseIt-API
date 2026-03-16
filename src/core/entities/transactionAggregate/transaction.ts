@@ -18,7 +18,7 @@ export default class Transaction extends BaseEntity {
     type: TransactionType,
     category: Category,
     description: string,
-    transactionDate: Date,
+    date: Date,
     createdAt?: Date,
     updatedAt?: Date,
   ) {
@@ -28,7 +28,7 @@ export default class Transaction extends BaseEntity {
     this.type = type;
     this.category = category;
     this.description = description;
-    this.date = transactionDate;
+    this.date = date;
   }
 
   static create(params: {
